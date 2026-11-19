@@ -92,6 +92,7 @@ details summary{cursor:pointer;font-weight:600}
     <div class="top-actions no-print">
       <span class="save" id="saveState">—</span>
       <button class="btn sm" id="btnBackup" title="Salva todo o histórico, NFs incluídas e configurações em um arquivo .json">Backup</button>
+      <button class="btn sm" id="btnLogout" title="Sair do sistema neste navegador">Sair</button>
     </div>
     <nav class="tabs" id="tabs">
       <button data-v="pacote" class="on">Pacote</button>
@@ -1505,7 +1506,38 @@ if (unsyncedLocal) {
 }
 window.__app = { state: () => state, computeDraft, Engine };
 }
-Sync.boot(startApp);
+
+/* ---------------- Login (tela de bloqueio) ----------------
+   Só impede o uso de um navegador já conectado. Os dados ficam protegidos pelo token do repositório privado.
+   Para trocar usuário/senha: gere o SHA-256 de "usuario:senha" e substitua LOGIN_HASH. */
+const Auth = (() => {
+  const LOGIN_HASH = 'f6bd2d1a9a2798aa5b2a000d477587b65aaac9a417064d91ed2bcd8714bbba89';   // admin : 123
+  const SESSION_KEY = 'devolucao-spools-sessao';
+  const ss = { get() { try { return sessionStorage.getItem(SESSION_KEY); } catch (e) { return null; } }, set(v) { try { sessionStorage.setItem(SESSION_KEY, v); } catch (e) {} }, del() { try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {} } };
+  async function sha256(t) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+  function screen(err, then) {
+    const g = document.getElementById('gate');
+    g.innerHTML = `<div class="card" style="max-width:380px"><h2>Devolução de Spools · Brasfels</h2><p class="sub">Entre para acessar o sistema.</p>
+      ${err ? '<div class="banner bad"><b>Usuário ou senha incorretos.</b></div>' : ''}
+      <form id="lForm"><div class="field"><label for="lUser">Usuário</label><input id="lUser" autocomplete="username" autofocus></div>
+      <div class="field" style="margin-top:10px"><label for="lPass">Senha</label><input id="lPass" type="password" autocomplete="current-password"></div>
+      <div class="flex" style="margin-top:14px"><span class="sp"></span><button class="btn pri" type="submit">Entrar</button></div></form></div>`;
+    g.classList.add('on');
+    document.getElementById(err ? 'lPass' : 'lUser').focus();
+    document.getElementById('lForm').onsubmit = async e => {
+      e.preventDefault();
+      const u = document.getElementById('lUser').value.trim().toLowerCase(), p = document.getElementById('lPass').value;
+      if (await sha256(u + ':' + p) !== LOGIN_HASH) return screen(true, then);
+      ss.set(u); g.classList.remove('on'); g.innerHTML = ''; then();
+    };
+  }
+  return {
+    require(then) { if (ss.get()) return then(); screen(false, then); },
+    logout() { ss.del(); location.reload(); }
+  };
+})();
+document.getElementById('btnLogout').onclick = () => Auth.logout();
+Auth.require(() => Sync.boot(startApp));
 
 </script>
 </body>
