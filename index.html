@@ -239,7 +239,7 @@ details summary{cursor:pointer;font-weight:600}
         <div class="card">
           <h2>Repositório GitHub</h2>
           <p class="sub" id="ghInfo"></p>
-          <div class="flex"><button class="btn" id="btnGhConnect">Conectar ao GitHub</button><button class="btn" id="btnGhRefresh">Atualizar agora</button><span class="sp"></span><button class="btn warn" id="btnGhDisconnect">Desconectar este navegador</button></div>
+          <div class="flex"><button class="btn" id="btnGhConnect">Conectar ao GitHub</button><button class="btn" id="btnGhRefresh">Atualizar agora</button><button class="btn" id="btnVault">Acesso por senha (outros PCs)</button><span class="sp"></span><button class="btn warn" id="btnGhDisconnect">Desconectar este navegador</button></div>
         </div>
         <div class="card">
           <h2>Backup e dados</h2>
@@ -386,6 +386,7 @@ const Sync = (() => {
 
   /* ---- ciclo de vida ---- */
   async function boot(start) {
+    if (!cfg) { try { cfg = JSON.parse(sessionStorage.getItem('devolucao-spools-acesso') || 'null'); } catch (e) { cfg = null; } }   // token aberto pelo login (acesso.json)
     if (!cfg) { if (window.SPOOL_BASE_DATA) return start(null); return connectScreen(); }
     busy(true, 'Carregando dados do GitHub…');
     try {
@@ -467,7 +468,7 @@ const Sync = (() => {
     if (status === 'error') return `<span class="chip bad retry" id="ghRetry" title="${esc(lastError)}">não gravado no GitHub · clique para tentar de novo</span>`;
     return `GitHub · ${esc(cfg.owner + '/' + cfg.repo)} · <span title="última gravação">${esc(when)}${savedBy ? ' por ' + esc(savedBy) : ''}</span>`;
   }
-  function disconnect() { ls.del(CFG_KEY); ls.del(PENDING_KEY); location.reload(); }
+  function disconnect() { ls.del(CFG_KEY); ls.del(PENDING_KEY); try { sessionStorage.clear(); } catch (e) {} location.reload(); }
   return {
     get on() { return !!(cfg && hooks); }, get cfg() { return cfg; }, SHARED, pick,
     hadPending: () => !!(cfg && ls.get(PENDING_KEY)), clearPending: () => ls.del(PENDING_KEY),
@@ -1345,12 +1346,29 @@ function renderGh() {
   $('ghInfo').innerHTML = remote
     ? `Conectado a <b>${esc(c.owner + '/' + c.repo)}</b> como <b>${esc(c.login)}</b>. Cada baixa, estorno, NF ou configuração vira um commit no repositório (com o seu usuário), e o site confere a versão mais nova a cada minuto e antes de confirmar uma baixa.`
     : 'Este navegador está usando dados locais (dados.js + armazenamento do navegador). Conecte ao repositório privado para compartilhar o histórico com a equipe.';
-  $('btnGhConnect').hidden = !!remote; $('btnGhRefresh').hidden = !remote; $('btnGhDisconnect').hidden = !remote;
+  $('btnGhConnect').hidden = !!remote; $('btnGhRefresh').hidden = !remote; $('btnGhDisconnect').hidden = !remote; $('btnVault').hidden = !remote;
   $('backupInfo').textContent = remote ? 'Os dados ficam no GitHub (com histórico de versões). O backup .json continua disponível como cópia extra.' : 'Os dados ficam salvos neste navegador. Faça backup depois de cada baixa e guarde o arquivo na pasta do sistema.';
 }
 $('btnGhConnect').onclick = () => Sync.connectScreen();
 $('btnGhRefresh').onclick = async () => { if (await Sync.refresh(true)) { render(); toast('Dados conferidos com o GitHub.'); } };
 $('btnGhDisconnect').onclick = () => { if (confirm('Desconectar este navegador do GitHub? O token é apagado deste navegador; os dados continuam no repositório.')) Sync.disconnect(); };
+$('btnVault').onclick = () => {
+  modal('Acesso por senha em outros computadores', `<p>Gera o arquivo <b>acesso.json</b> com o token deste navegador <b>criptografado</b> pela senha abaixo. Publicado no site, qualquer computador entra só com usuário e senha, sem token.</p>
+    <div class="banner warn"><b>A senha precisa ser forte.</b>O arquivo fica no site público: quem baixar pode testar senhas sem limite. Mínimo 12 caracteres, com 3 destes: minúscula, maiúscula, número, símbolo. Não use nome da empresa, projeto, datas ou sequências.</div>
+    <div class="row"><div class="field"><label for="vUser">Usuário</label><input id="vUser" value="admin" autocomplete="off"></div></div>
+    <div class="row" style="margin-top:8px"><div class="field"><label for="vPass">Senha</label><input id="vPass" type="password" autocomplete="new-password"></div><div class="field"><label for="vPass2">Repita a senha</label><input id="vPass2" type="password" autocomplete="new-password"></div></div>
+    <p class="small muted" id="vMsg"></p>
+    <div class="flex"><span class="sp"></span><button class="btn pri" id="vGo">Gerar acesso.json</button></div>`);
+  $('vGo').onclick = async () => {
+    const u = $('vUser').value.trim().toLowerCase(), p = $('vPass').value;
+    const err = Auth.weak(u, p); if (err) return ($('vMsg').textContent = err);
+    if (p !== $('vPass2').value) return ($('vMsg').textContent = 'As senhas não conferem.');
+    $('vMsg').textContent = 'Criptografando…';
+    const c = Sync.cfg; const vault = await Auth.seal(u, p, { owner: c.owner, repo: c.repo, token: c.token, login: c.login });
+    download('acesso.json', JSON.stringify(vault, null, 1), 'application/json');
+    $('vMsg').innerHTML = '<b>acesso.json baixado.</b> Publique esse arquivo no repositório do site (ao lado do index.html). A partir daí o login passa a ser este usuário e senha; o admin/123 deixa de valer.';
+  };
+};
 $('saveState').onclick = e => { if (e.target.closest('#ghRetry')) Sync.retry(); };
 if (remote) Sync.attach({
   get: () => state,
@@ -1507,33 +1525,67 @@ if (unsyncedLocal) {
 window.__app = { state: () => state, computeDraft, Engine };
 }
 
-/* ---------------- Login (tela de bloqueio) ----------------
-   Só impede o uso de um navegador já conectado. Os dados ficam protegidos pelo token do repositório privado.
-   Para trocar usuário/senha: gere o SHA-256 de "usuario:senha" e substitua LOGIN_HASH. */
+/* ---------------- Login ----------------
+   Com acesso.json publicado ao lado do index.html: o token do repositório de dados está criptografado nele
+   (AES-GCM, chave PBKDF2-SHA256 de "usuario:senha"). Usuário e senha certos abrem o token só nesta aba.
+   Sem acesso.json: tela de bloqueio simples (admin/123); os dados exigem o token conectado no navegador. */
 const Auth = (() => {
-  const LOGIN_HASH = 'f6bd2d1a9a2798aa5b2a000d477587b65aaac9a417064d91ed2bcd8714bbba89';   // admin : 123
-  const SESSION_KEY = 'devolucao-spools-sessao';
-  const ss = { get() { try { return sessionStorage.getItem(SESSION_KEY); } catch (e) { return null; } }, set(v) { try { sessionStorage.setItem(SESSION_KEY, v); } catch (e) {} }, del() { try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {} } };
+  const LOGIN_HASH = 'f6bd2d1a9a2798aa5b2a000d477587b65aaac9a417064d91ed2bcd8714bbba89';   // admin : 123 (só sem acesso.json)
+  const SESSION_KEY = 'devolucao-spools-sessao', VAULT_KEY = 'devolucao-spools-acesso', ITER = 600000;
+  const ss = { get() { try { return sessionStorage.getItem(SESSION_KEY); } catch (e) { return null; } }, set(v) { try { sessionStorage.setItem(SESSION_KEY, v); } catch (e) {} }, del() { try { sessionStorage.removeItem(SESSION_KEY); sessionStorage.removeItem(VAULT_KEY); } catch (e) {} } };
   async function sha256(t) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+  const b64e = u8 => { let s = ''; u8.forEach(x => { s += String.fromCharCode(x); }); return btoa(s); };
+  const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  async function deriveKey(secret, salt, iter) {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  async function seal(user, pass, payload) {
+    const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveKey(user + ':' + pass, salt, ITER);
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(payload))));
+    return { v: 1, kdf: 'PBKDF2-SHA256', iter: ITER, salt: b64e(salt), iv: b64e(iv), data: b64e(ct), createdAt: new Date().toISOString() };
+  }
+  async function unseal(vault, user, pass) {
+    try { const key = await deriveKey(user + ':' + pass, b64d(vault.salt), vault.iter); return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(vault.iv) }, key, b64d(vault.data)))); }
+    catch (e) { return null; }
+  }
+  function weak(u, p) {
+    if (!u) return 'Informe o usuário.';
+    if (p.length < 12) return 'A senha precisa ter pelo menos 12 caracteres.';
+    if ([/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].filter(r => r.test(p)).length < 3) return 'Use pelo menos 3 destes: letra minúscula, maiúscula, número, símbolo.';
+    if (/(012|123|234|345|456|567|678|789|abc|qwe|asd)/i.test(p) || /(.)\1\1/.test(p)) return 'Evite sequências (123, abc, qwe) e caracteres repetidos.';
+    if (/brasfels|spool|step|admin|senha|password|devolu|p-?85|20\d\d/i.test(p) || p.toLowerCase().includes(u)) return 'Não use nome de empresa, projeto, usuário, "senha" ou ano.';
+    return '';
+  }
+  let vaultP = null;
+  const loadVault = () => vaultP || (vaultP = fetch('acesso.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => (j && j.data && j.salt) ? j : null).catch(() => null));
   function screen(err, then) {
     const g = document.getElementById('gate');
     g.innerHTML = `<div class="card" style="max-width:380px"><h2>Devolução de Spools · Brasfels</h2><p class="sub">Entre para acessar o sistema.</p>
       ${err ? '<div class="banner bad"><b>Usuário ou senha incorretos.</b></div>' : ''}
       <form id="lForm"><div class="field"><label for="lUser">Usuário</label><input id="lUser" autocomplete="username" autofocus></div>
       <div class="field" style="margin-top:10px"><label for="lPass">Senha</label><input id="lPass" type="password" autocomplete="current-password"></div>
-      <div class="flex" style="margin-top:14px"><span class="sp"></span><button class="btn pri" type="submit">Entrar</button></div></form></div>`;
+      <div class="flex" style="margin-top:14px"><span class="small muted" id="lMsg"></span><span class="sp"></span><button class="btn pri" type="submit" id="lGo">Entrar</button></div></form></div>`;
     g.classList.add('on');
     document.getElementById(err ? 'lPass' : 'lUser').focus();
     document.getElementById('lForm').onsubmit = async e => {
       e.preventDefault();
       const u = document.getElementById('lUser').value.trim().toLowerCase(), p = document.getElementById('lPass').value;
-      if (await sha256(u + ':' + p) !== LOGIN_HASH) return screen(true, then);
+      document.getElementById('lGo').disabled = true; document.getElementById('lMsg').textContent = 'Verificando…';
+      const vault = await loadVault();
+      if (vault) {
+        const acc = await unseal(vault, u, p);
+        if (!acc) return screen(true, then);
+        try { sessionStorage.setItem(VAULT_KEY, JSON.stringify(acc)); } catch (e2) {}
+      } else if (await sha256(u + ':' + p) !== LOGIN_HASH) return screen(true, then);
       ss.set(u); g.classList.remove('on'); g.innerHTML = ''; then();
     };
   }
   return {
     require(then) { if (ss.get()) return then(); screen(false, then); },
-    logout() { ss.del(); location.reload(); }
+    logout() { ss.del(); location.reload(); },
+    seal, weak, unseal
   };
 })();
 document.getElementById('btnLogout').onclick = () => Auth.logout();
