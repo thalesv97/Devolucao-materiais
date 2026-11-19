@@ -1,0 +1,1510 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Devolução de Spools</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f7a45'/%3E%3Ctext x='32' y='45' font-size='38' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3E%E2%86%BA%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg:#f4f6f8;--panel:#fff;--panel2:#f8fafb;--line:#e1e6eb;--line2:#cfd7df;--text:#14202b;--muted:#5f6f7e;--accent:#14532d;--accent2:#1f7a45;--accentbg:#e6f4ea;--blue:#1d5f9e;--bluebg:#e7f0fa;--amber:#8a5a00;--amberbg:#fff3d6;--red:#a1261d;--redbg:#fde8e6;--grey:#6b7785;--greybg:#eef1f4;--shadow:0 1px 2px rgba(16,32,48,.06),0 4px 14px rgba(16,32,48,.05);--mono:ui-monospace,SFMono-Regular,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f151b;--panel:#161e26;--panel2:#1b242e;--line:#26323e;--line2:#33414f;--text:#e6edf3;--muted:#93a3b3;--accent:#7fd99a;--accent2:#5cc57d;--accentbg:#173325;--blue:#8cc3ff;--bluebg:#16283b;--amber:#ffcd6b;--amberbg:#352a12;--red:#ff9c92;--redbg:#3a1b19;--grey:#9aa7b4;--greybg:#202a34;--shadow:none}}
+:root[data-theme="dark"]{--bg:#0f151b;--panel:#161e26;--panel2:#1b242e;--line:#26323e;--line2:#33414f;--text:#e6edf3;--muted:#93a3b3;--accent:#7fd99a;--accent2:#5cc57d;--accentbg:#173325;--blue:#8cc3ff;--bluebg:#16283b;--amber:#ffcd6b;--amberbg:#352a12;--red:#ff9c92;--redbg:#3a1b19;--grey:#9aa7b4;--greybg:#202a34;--shadow:none}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.top{position:sticky;top:0;z-index:20;background:var(--panel);border-bottom:1px solid var(--line);box-shadow:var(--shadow)}
+.top-in{max-width:1500px;margin:auto;padding:10px 20px 0;display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px 18px}
+.brand{display:flex;align-items:center;gap:10px;padding-bottom:10px;margin-right:auto}
+.brand .mark{width:30px;height:30px;border-radius:8px;background:var(--accent);color:var(--panel);display:grid;place-items:center;font-weight:800}
+.brand b{display:block;font-size:15px;letter-spacing:-.01em}.brand small{color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:2px;overflow:auto;order:3;width:100%}
+.tabs button{border:0;background:transparent;padding:9px 14px;border-bottom:2px solid transparent;color:var(--muted);font-weight:600;white-space:nowrap}
+.tabs button.on{color:var(--text);border-bottom-color:var(--accent2)}
+.tabs .cnt{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--redbg);color:var(--red);font-size:11px;text-align:center}
+.top-actions{display:flex;gap:8px;align-items:center;padding-bottom:10px;flex-wrap:wrap}
+.save{font-size:12px;color:var(--muted)}
+main{max-width:1500px;margin:auto;padding:18px 20px 60px}
+.view{display:none}.view.on{display:block}
+.grid2{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:16px;align-items:start}.grid2>*{min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
+.card h2{font-size:15px;margin:0 0 4px}.card h3{font-size:13px;margin:16px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.sub{color:var(--muted);margin:0 0 12px;font-size:13px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.field{display:grid;gap:4px;flex:1;min-width:140px}
+.field label{font-size:12px;color:var(--muted);font-weight:600}
+input,select,textarea{background:var(--panel);border:1px solid var(--line2);border-radius:7px;padding:8px 10px;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--bluebg)}
+textarea{min-height:110px;resize:vertical;font-family:var(--mono);font-size:12px}
+.btn{border:1px solid var(--line2);background:var(--panel);padding:8px 13px;border-radius:7px;font-weight:600;white-space:nowrap}
+.btn:hover{background:var(--panel2)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.pri{background:var(--accent2);border-color:var(--accent2);color:#fff}.btn.pri:hover{filter:brightness(1.07)}
+.btn.warn{color:var(--red);border-color:var(--red)}.btn.sm{padding:4px 9px;font-size:12px}.btn.link{border:0;background:none;color:var(--blue);padding:0}
+.chip{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.ok{background:var(--accentbg);color:var(--accent)}.bad{background:var(--redbg);color:var(--red)}.warn{background:var(--amberbg);color:var(--amber)}.info{background:var(--bluebg);color:var(--blue)}.mute{background:var(--greybg);color:var(--grey)}
+.banner{border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1px solid}
+.banner.ok{border-color:var(--accent2)}.banner.bad{border-color:var(--red)}.banner.info{border-color:var(--blue)}.banner.warn{border-color:var(--amber)}
+.banner b{display:block;margin-bottom:2px}.banner ul{margin:4px 0 0;padding-left:18px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+.kpi span{font-size:12px;color:var(--muted)}.kpi b{display:block;font-size:22px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tbl{overflow:auto;border:1px solid var(--line);border-radius:8px;max-height:560px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:var(--panel2);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);z-index:1;white-space:nowrap}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.code{font-family:var(--mono);font-size:12px;white-space:nowrap}
+tr.hl td{background:var(--amberbg)}tr.dim td{color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;margin-bottom:12px}
+.seg button{border:0;background:var(--panel);padding:7px 13px;font-weight:600;color:var(--muted)}.seg button.on{background:var(--bluebg);color:var(--blue)}
+.nfcard{border:1px solid var(--line);border-radius:9px;margin-bottom:12px;overflow:hidden}
+.nfhead{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:10px 12px;background:var(--panel2);border-bottom:1px solid var(--line)}
+.nfhead .nfn{font-size:16px;font-weight:800}.nfhead .meta{color:var(--muted);font-size:12px}.nfhead .grow{flex:1}
+.nfcard .tbl{border:0;border-radius:0;max-height:none}
+.spool-list{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-top:10px}
+.spool-list div{display:flex;gap:8px;align-items:center;padding:5px 9px;border-bottom:1px solid var(--line);font-size:12px}
+.spool-list div:last-child{border-bottom:0}.spool-list .t{font-family:var(--mono);flex:1;overflow:hidden;text-overflow:ellipsis}
+.x{border:0;background:none;color:var(--muted);font-size:16px;line-height:1;padding:0 3px}.x:hover{color:var(--red)}
+.empty{padding:22px;text-align:center;color:var(--muted);border:1px dashed var(--line2);border-radius:8px}
+.drop{border:2px dashed var(--line2);border-radius:10px;padding:22px;text-align:center;color:var(--muted);background:var(--panel2)}
+.drop.over{border-color:var(--blue);background:var(--bluebg)}
+.modal{position:fixed;inset:0;background:rgba(10,18,26,.45);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:50;overflow:auto}
+.modal.on{display:flex}.modal-box{background:var(--panel);border-radius:12px;max-width:980px;width:100%;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.modal-head h2{margin:0;font-size:17px}
+.toast{position:fixed;right:18px;bottom:18px;background:var(--text);color:var(--panel);padding:10px 14px;border-radius:8px;font-weight:600;max-width:420px;z-index:60;display:none}
+.toast.on{display:block}.toast.err{background:var(--red);color:#fff}
+.muted{color:var(--muted)}.small{font-size:12px}.mono{font-family:var(--mono)}.right{text-align:right}
+.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sp{flex:1}
+details summary{cursor:pointer;font-weight:600}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}main{padding:14px 12px 50px}.top-in{padding:8px 12px 0}}
+.gate{position:fixed;inset:0;z-index:70;background:var(--bg);overflow:auto;display:none;padding:16px}.gate.on{display:block}.gate .card{max-width:600px;margin:48px auto}
+.gate ol{margin:6px 0 0;padding-left:20px}.gate li{margin:3px 0}
+.busy{position:fixed;inset:0;z-index:65;background:rgba(10,18,26,.3);display:none;place-items:center}.busy.on{display:grid}.busy div{background:var(--panel);padding:14px 18px;border-radius:10px;font-weight:600;box-shadow:var(--shadow)}
+#saveState .chip{cursor:default}#saveState .chip.retry{cursor:pointer}
+@media print{.top,.no-print,.btn{display:none!important}.card{box-shadow:none;border:0}.tbl{max-height:none;overflow:visible}}
+
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><div class="mark">↺</div><div><b>Devolução de Spools · Brasfels</b><small id="baseInfo">P-85 · notas de retorno</small></div></div>
+    <div class="top-actions no-print">
+      <span class="save" id="saveState">—</span>
+      <button class="btn sm" id="btnBackup" title="Salva todo o histórico, NFs incluídas e configurações em um arquivo .json">Backup</button>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-v="pacote" class="on">Pacote</button>
+      <button data-v="saldo">Saldo das NFs</button>
+      <button data-v="notas">Notas fiscais</button>
+      <button data-v="historico">Histórico</button>
+      <button data-v="pend">Pendências<span class="cnt" id="pendCnt"></span></button>
+      <button data-v="config">Configurações</button>
+    </nav>
+  </div>
+</header>
+<main>
+  <!-- PACOTE -->
+  <section class="view on" id="v-pacote">
+    <div class="grid2">
+      <div>
+        <div class="card">
+          <h2>Pacote de spools</h2>
+          <p class="sub">Cole a lista de spools enviados ao cliente. Nada é debitado até você confirmar a baixa.</p>
+          <div class="row">
+            <div class="field"><label for="pkgId">Identificação do pacote</label><input id="pkgId" placeholder="Ex.: PACOTE-001"></div>
+            <div class="field" style="max-width:160px"><label for="pkgDate">Data do envio</label><input id="pkgDate" type="date"></div>
+          </div>
+          <div class="field" style="margin-top:10px"><label for="spoolPaste">Spools (um por linha, ou cole a tabela inteira: os tags IS- são extraídos)</label><textarea id="spoolPaste" placeholder="IS-M10B-PCW-C11-0138-001-005&#10;IS-M10B-W-B10-3670-001-003"></textarea></div>
+          <div class="flex" style="margin-top:8px"><button class="btn" id="btnAddSpools">Adicionar à lista</button><span class="sp"></span><button class="btn sm warn" id="btnClearPkg">Limpar pacote</button></div>
+          <div class="flex small muted" style="margin-top:12px"><span id="spoolCount">0 spools</span><span class="sp"></span><span id="spoolFilterInfo"></span></div>
+          <div class="spool-list" id="spoolList"></div>
+        </div>
+      </div>
+      <div>
+        <div id="pkgBanner"></div>
+        <div class="kpis" id="pkgKpis"></div>
+        <div class="card">
+          <div class="flex" style="margin-bottom:6px">
+            <div class="seg" id="pkgSeg"><button data-s="nf" class="on">Por NF (nota de retorno)</button><button data-s="code">Por código</button><button data-s="spool">Por spool</button><button data-s="falta">Faltas<span class="cnt" id="faltaCnt"></span></button></div>
+            <span class="sp"></span>
+            <button class="btn" id="btnExportSim">Exportar Excel (simulação)</button>
+            <button class="btn pri" id="btnCommit">Confirmar baixa</button>
+          </div>
+          <div id="pkgOut"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SALDO -->
+  <section class="view" id="v-saldo">
+    <div class="kpis" id="saldoKpis"></div>
+    <div class="card">
+      <h2>Posição por nota fiscal</h2>
+      <p class="sub">Saldo atual (só baixas confirmadas). Clique numa NF para ver os itens.</p>
+      <div class="tbl" style="max-height:340px"><table><thead><tr><th>NF</th><th>Emissão</th><th class="n">Itens</th><th class="n">Zerados</th><th class="n">Com saldo</th><th class="n">Valor recebido (R$)</th><th class="n">Valor em saldo (R$)</th><th>Situação</th></tr></thead><tbody id="nfBalRows"></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="flex" style="margin-bottom:10px">
+        <h2 style="margin:0">Itens por NF e código</h2><span class="sp"></span>
+        <select id="saldoFilter" style="width:auto"><option value="">Todos os itens</option><option value="ABERTO">Com saldo</option><option value="ZERADO">Zerados</option><option value="SEMPAR">Sem par na base de spools</option><option value="MOV">Com baixa</option></select>
+        <input id="saldoSearch" placeholder="Buscar NF, código ou descrição" style="max-width:280px">
+        <button class="btn" id="btnExportSaldo">Exportar Excel</button>
+      </div>
+      <div class="tbl"><table><thead><tr><th>NF</th><th>Emissão</th><th class="n">Item</th><th>Código</th><th>Descrição</th><th>Un</th><th class="n">Recebido</th><th class="n">Devolvido</th><th class="n">Saldo</th><th>Situação</th><th></th></tr></thead><tbody id="saldoRows"></tbody></table></div>
+      <p class="small muted" id="saldoNote"></p>
+    </div>
+  </section>
+
+  <!-- NOTAS -->
+  <section class="view" id="v-notas">
+    <div class="grid2">
+      <div>
+        <div class="card">
+          <h2>Incluir nova NF</h2>
+          <p class="sub">Arraste o XML da NF-e (preferível) ou o PDF da DANFE. O sistema lê os itens, confere com o valor total da nota e mostra antes de cadastrar.</p>
+          <div class="drop" id="drop">Solte aqui os arquivos .xml ou .pdf<br><span class="small">ou</span><br><input type="file" id="nfFile" accept=".xml,.pdf" multiple style="max-width:260px;margin-top:6px"></div>
+          <details style="margin-top:14px"><summary>Cadastro manual (colar do Excel)</summary>
+            <div class="row" style="margin-top:10px">
+              <div class="field"><label>NF</label><input id="mNf" inputmode="numeric"></div>
+              <div class="field"><label>Emissão</label><input id="mDate" type="date"></div>
+            </div>
+            <div class="field" style="margin-top:8px"><label>Chave de acesso (opcional)</label><input id="mKey"></div>
+            <div class="field" style="margin-top:8px"><label>Itens: Código | Descrição | Un | Qtd | Valor unit. (colunas copiadas do Excel)</label><textarea id="mItems" placeholder="BB-PP-ELR01XX-307-054	3&quot; CURVA 90	PC	10	17,88"></textarea></div>
+            <button class="btn" id="btnManual" style="margin-top:8px">Pré-visualizar</button>
+          </details>
+        </div>
+        <div class="card">
+          <h2>NFs aguardando</h2>
+          <p class="sub">Notas de correção citadas na planilha de controle que ainda não foram cadastradas.</p>
+          <div id="awaitList"></div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h2>NFs cadastradas</h2>
+          <p class="sub">Só NFs ATIVAS entram no saldo e no FIFO (da mais antiga para a mais nova).</p>
+          <div class="tbl"><table><thead><tr><th>NF</th><th>Emissão</th><th>Origem</th><th class="n">Itens</th><th class="n">Valor (R$)</th><th>Situação no saldo</th><th></th></tr></thead><tbody id="nfRows"></tbody></table></div>
+        </div>
+        <div class="card">
+          <h2>NFs fora do saldo (referência)</h2>
+          <p class="sub">Recusadas e NFs de entrada emitidas pela própria Brasfels. Ficam aqui só para consulta.</p>
+          <div class="tbl" style="max-height:320px"><table><thead><tr><th>NF</th><th>Emissão</th><th>Situação</th><th>Motivo</th></tr></thead><tbody id="exclRows"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTÓRICO -->
+  <section class="view" id="v-historico">
+    <div class="card">
+      <div class="flex" style="margin-bottom:8px"><h2 style="margin:0">Pacotes lançados</h2><span class="sp"></span><button class="btn pri" id="btnExportHist">Relatório de lotes e saldos (Excel)</button></div>
+      <p class="sub">Cada baixa fica registrada por spool, NF e quantidade. <b>Estornar</b> devolve o saldo e mantém o lote no histórico como ESTORNADO. <b>Excluir</b> apaga o lote e os movimentos (o saldo volta para as NFs) e deixa só um registro da exclusão. O relatório traz o saldo de cada NF depois de cada lote.</p>
+      <div class="tbl"><table><thead><tr><th>Pacote</th><th>Tipo</th><th>Data envio</th><th>Lançado em</th><th class="n">Spools</th><th>NFs</th><th class="n">Linhas</th><th>Situação</th><th></th></tr></thead><tbody id="pkgRows"></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="flex" style="margin-bottom:10px"><h2 style="margin:0">Movimentos</h2><span class="sp"></span><input id="movSearch" placeholder="Buscar pacote, spool, NF ou código" style="max-width:300px"></div>
+      <div class="tbl"><table><thead><tr><th>Pacote</th><th>Data</th><th>Spool</th><th>NF</th><th class="n">Item</th><th>Código</th><th>Un</th><th class="n">Qtd</th><th>Status</th></tr></thead><tbody id="movRows"></tbody></table></div>
+    </div>
+
+    <div class="card" id="delCard"><h2>Lotes excluídos</h2><p class="sub">Registro das exclusões (o saldo desses lotes já voltou para as NFs).</p><div class="tbl" style="max-height:260px"><table><thead><tr><th>Lote</th><th>Tipo</th><th>Data envio</th><th>Excluído em</th><th class="n">Linhas</th><th>NFs</th><th>Motivo</th></tr></thead><tbody id="delRows"></tbody></table></div></div>
+  </section>
+
+  <!-- PENDÊNCIAS -->
+  <section class="view" id="v-pend"><div id="pendOut"></div></section>
+
+  <!-- CONFIG -->
+  <section class="view" id="v-config">
+    <div class="grid2">
+      <div>
+        <div class="card">
+          <h2>Prefixos removidos do código da NF</h2>
+          <p class="sub">O código da NF perde o prefixo antes do cruzamento com a base de spools. Separe por vírgula.</p>
+          <div class="row"><div class="field"><input id="cfgPrefixes" placeholder="BB-"></div><button class="btn" id="btnPrefixes">Salvar</button></div>
+        </div>
+        <div class="card">
+          <h2>Unidades equivalentes</h2>
+          <p class="sub">Grafias diferentes da mesma unidade (sem conversão de quantidade).</p>
+          <div class="tbl" style="max-height:220px"><table><thead><tr><th>Na NF</th><th>Tratar como</th><th></th></tr></thead><tbody id="aliasRows"></tbody></table></div>
+          <div class="row" style="margin-top:8px"><div class="field"><input id="aliasFrom" placeholder="MT"></div><div class="field"><input id="aliasTo" placeholder="M"></div><button class="btn" id="btnAlias">Adicionar</button></div>
+        </div>
+        <div class="card">
+          <h2>Base de spools</h2>
+          <p class="sub" id="baseSpoolInfo"></p>
+          <div class="field"><label>Atualizar com nova exportação do Spool Materials (.xlsx)</label><input type="file" id="spoolBaseFile" accept=".xlsx"></div>
+          <button class="btn sm" id="btnBaseRestore" style="margin-top:8px">Voltar para a base original</button>
+        </div>
+        <div class="card">
+          <h2>Repositório GitHub</h2>
+          <p class="sub" id="ghInfo"></p>
+          <div class="flex"><button class="btn" id="btnGhConnect">Conectar ao GitHub</button><button class="btn" id="btnGhRefresh">Atualizar agora</button><span class="sp"></span><button class="btn warn" id="btnGhDisconnect">Desconectar este navegador</button></div>
+        </div>
+        <div class="card">
+          <h2>Backup e dados</h2>
+          <p class="sub" id="backupInfo">Os dados ficam salvos neste navegador. Faça backup depois de cada baixa e guarde o arquivo na pasta do sistema.</p>
+          <div class="flex"><button class="btn" id="btnBackup2">Baixar backup (.json)</button><label class="btn">Restaurar backup<input type="file" id="restoreFile" accept=".json" hidden></label><span class="sp"></span><button class="btn warn" id="btnReset">Apagar tudo</button></div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="flex"><h2 style="margin:0">Unidades por código e conversão</h2><span class="sp"></span><label class="small"><input type="checkbox" id="unitAll" style="width:auto"> mostrar todos</label></div>
+          <p class="sub">Un base = unidade da base de spools (tubo = M, demais = PC). Se a NF vier em outra unidade, informe o fator: quantas unidades da NF equivalem a 1 unidade da base (ex.: base M e NF KG → kg por metro). Sem fator, o código não debita.</p>
+          <input id="unitSearch" placeholder="Buscar código" style="margin-bottom:10px">
+          <div class="tbl"><table><thead><tr><th>Código</th><th>Descrição</th><th>Un base</th><th>Un NF</th><th class="n">Sugestão (kg/un)</th><th>Fator</th><th>Status</th></tr></thead><tbody id="unitRows"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="modal"><div class="modal-box"><div class="modal-head"><h2 id="mTitle"></h2><button class="x" id="mClose" aria-label="Fechar" style="font-size:24px">×</button></div><div id="mBody"></div></div></div>
+<div class="toast" id="toast"></div>
+<div class="busy" id="busy"><div id="busyMsg">Gravando no GitHub…</div></div>
+<div class="gate" id="gate"></div>
+
+<!-- Uso local (sem GitHub): dados.js na mesma pasta. No site publicado esse arquivo NÃO existe; os dados vêm do repositório privado. -->
+<script src="dados.js"></script>
+<script>
+/* ---------------- GitHub: repositório PRIVADO como banco de dados ----------------
+   dados.json  = base inicial (NFs e base de spools; mesmo conteúdo de dados.js)
+   estado.json = histórico compartilhado (baixas, pacotes, NFs incluídas, configurações)
+   Cada gravação é um commit com o sha da versão lida: se outra pessoa gravou antes, o GitHub recusa (409),
+   o site recarrega a versão nova e pede para refazer a ação. Nenhuma baixa é sobrescrita. */
+const Sync = (() => {
+  const CFG_KEY = 'devolucao-spools-github', PENDING_KEY = 'devolucao-spools-github-pending';
+  const DATA_FILE = 'dados.json', STATE_FILE = 'estado.json';
+  const SHARED = ['version', 'config', 'addedNfs', 'nfStatus', 'movements', 'packages', 'deletions', 'spoolBase'];
+  const ls = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
+  let cfg = null; try { cfg = JSON.parse(ls.get(CFG_KEY) || 'null'); } catch (e) { cfg = null; }
+  let sha = null, rev = 0, lastJson = null, hooks = null, status = 'ok', lastError = '', savedAt = null, savedBy = '', chain = Promise.resolve(true), inFlight = 0;
+  const $ = id => document.getElementById(id);
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pick = o => { const r = {}; SHARED.forEach(k => { if (o && o[k] !== undefined) r[k] = o[k]; }); return r; };
+
+  /* ---- API ---- */
+  const repoPath = c => '/repos/' + encodeURIComponent(c.owner) + '/' + encodeURIComponent(c.repo);
+  function api(c, path, opts = {}, accept = 'application/vnd.github+json') {
+    const headers = { Accept: accept, Authorization: 'Bearer ' + c.token, 'X-GitHub-Api-Version': '2022-11-28' };
+    if (opts.body) headers['Content-Type'] = 'application/json';
+    return fetch('https://api.github.com' + path, { cache: 'no-store', ...opts, headers });
+  }
+  async function httpError(r, what) {
+    let m = ''; try { m = (await r.json()).message || ''; } catch (e) {}
+    const why = r.status === 401 ? 'token inválido ou expirado' : r.status === 403 ? 'sem permissão (o token precisa de Contents: leitura e gravação neste repositório)' : r.status === 404 ? 'não encontrado (confira dono, nome do repositório e se o token tem acesso a ele)' : (m || 'HTTP ' + r.status);
+    const e = new Error(what + ': ' + why); e.status = r.status; e.ghMessage = m; return e;
+  }
+  async function fileSha(c, path) {
+    const r = await api(c, repoPath(c) + '/contents/' + path, {}, 'application/vnd.github.object');
+    if (r.status === 404) { const e = await httpError(r, 'Leitura de ' + path); if (/not found/i.test(e.ghMessage) && await repoExists(c)) return null; throw e; }
+    if (!r.ok) throw await httpError(r, 'Leitura de ' + path);
+    return (await r.json()).sha;
+  }
+  async function repoExists(c) { const r = await api(c, repoPath(c)); return r.ok; }
+  async function readBlob(c, s) {   // blob pelo sha: conteúdo exatamente da versão cujo sha temos (até 100 MB)
+    const r = await api(c, repoPath(c) + '/git/blobs/' + s, {}, 'application/vnd.github.raw+json');
+    if (!r.ok) throw await httpError(r, 'Leitura do arquivo'); return r.text();
+  }
+  async function getFile(c, path) { const s = await fileSha(c, path); return s ? { sha: s, text: await readBlob(c, s) } : null; }
+  function b64(str) { const b = new TextEncoder().encode(str); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); }
+  async function putFile(c, path, text, prevSha, message) {
+    const body = { message, content: b64(text) }; if (prevSha) body.sha = prevSha;
+    const r = await api(c, repoPath(c) + '/contents/' + path, { method: 'PUT', body: JSON.stringify(body) });
+    if (r.status === 409 || r.status === 422) { const e = await httpError(r, 'Gravação de ' + path); if (r.status === 409 || /sha/i.test(e.ghMessage)) e.conflict = true; throw e; }
+    if (!r.ok) throw await httpError(r, 'Gravação de ' + path);
+    return (await r.json()).content.sha;
+  }
+  const stateText = (shared, n) => JSON.stringify({ ...shared, rev: n, savedAt: new Date().toISOString(), savedBy: cfg.login }, null, 1);
+
+  /* ---- telas de conexão / inicialização ---- */
+  const gate = html => { $('gate').innerHTML = html; $('gate').classList.add('on'); };
+  const closeGate = () => $('gate').classList.remove('on');
+  const busy = (on, msg) => { if (msg) $('busyMsg').textContent = msg; $('busy').classList.toggle('on', !!on); };
+  function connectScreen(err) {
+    const c = cfg || {};
+    gate(`<div class="card"><h2>Conectar ao repositório de dados</h2>
+      <p class="sub">Os dados do sistema (NFs, histórico de baixas) ficam num repositório <b>privado</b> do GitHub. Informe onde ele está e o seu token de acesso. O token fica salvo só neste navegador.</p>
+      ${err ? `<div class="banner bad"><b>Não foi possível conectar</b>${esc(err)}</div>` : ''}
+      <div class="row"><div class="field"><label for="gOwner">Dono (usuário ou organização)</label><input id="gOwner" value="${esc(c.owner || '')}" placeholder="minha-organizacao"></div>
+      <div class="field"><label for="gRepo">Repositório de dados (privado)</label><input id="gRepo" value="${esc(c.repo || 'spools-dados')}"></div></div>
+      <div class="field" style="margin-top:10px"><label for="gToken">Token do GitHub (fine-grained, Contents: Read and write)</label><input id="gToken" type="password" autocomplete="off" placeholder="github_pat_…"></div>
+      <details style="margin-top:10px"><summary>Como gerar o token</summary><ol class="small">
+        <li>GitHub → foto → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</li>
+        <li><b>Resource owner</b>: o dono do repositório de dados (a organização, se for o caso).</li>
+        <li><b>Repository access</b>: <i>Only select repositories</i> → só o repositório de dados.</li>
+        <li><b>Permissions</b> → Repository permissions → <b>Contents: Read and write</b>.</li>
+        <li>Gere, copie e cole aqui. Ao expirar, gere outro e conecte de novo.</li></ol></details>
+      <div class="flex" style="margin-top:14px">${window.SPOOL_BASE_DATA ? '<button class="btn" id="gLocal">Usar só neste computador (sem GitHub)</button>' : ''}<span class="sp"></span><button class="btn pri" id="gGo">Conectar</button></div></div>`);
+    if ($('gLocal')) $('gLocal').onclick = () => location.reload();
+    $('gGo').onclick = async () => {
+      const n = { owner: $('gOwner').value.trim(), repo: $('gRepo').value.trim(), token: $('gToken').value.trim() };
+      if (!n.owner || !n.repo || !n.token) return connectScreen('Preencha dono, repositório e token.');
+      busy(true, 'Conectando…');
+      try {
+        const u = await api(n, '/user'); if (!u.ok) throw await httpError(u, 'Token');
+        n.login = (await u.json()).login;
+        const r = await api(n, repoPath(n)); if (!r.ok) throw await httpError(r, 'Repositório ' + n.owner + '/' + n.repo);
+        const repo = await r.json();
+        if (!repo.private) throw new Error(`o repositório ${n.owner}/${n.repo} é PÚBLICO. Os dados das NFs ficariam visíveis para qualquer pessoa. Torne-o privado (Settings → Danger Zone → Change visibility) e conecte de novo.`);
+        cfg = n; ls.set(CFG_KEY, JSON.stringify(cfg)); busy(false); location.reload();
+      } catch (e) { busy(false); connectScreen(e.message); }
+    };
+  }
+  function setupScreen(hasData, hasState, err) {
+    gate(`<div class="card"><h2>Preparar o repositório ${esc(cfg.owner + '/' + cfg.repo)}</h2>
+      <p class="sub">O repositório está conectado, mas ainda não tem ${!hasData ? 'a base de dados' : 'o histórico'} do sistema. Isso é feito uma única vez.</p>
+      ${err ? `<div class="banner bad"><b>Erro</b>${esc(err)}</div>` : ''}
+      ${!hasData ? `<div class="field"><label>Base inicial: arquivo <b>dados.js</b> (pasta do sistema) ou <b>base_data.json</b> (pasta base)</label><input type="file" id="sData" accept=".js,.json"></div>` : ''}
+      ${!hasState ? `<div class="field" style="margin-top:10px"><label>Histórico existente (opcional): o <b>backup .json</b> baixado do sistema no navegador que já tinha as baixas</label><input type="file" id="sBackup" accept=".json"></div>
+      <p class="small muted">Sem backup, o histórico começa vazio. Para levar as baixas já feitas: abra o index.html antigo no navegador de sempre → Backup → escolha o arquivo aqui.</p>` : ''}
+      <div class="flex" style="margin-top:14px"><button class="btn" id="sBack">Alterar conexão</button><span class="sp"></span><button class="btn pri" id="sGo">Inicializar</button></div></div>`);
+    $('sBack').onclick = () => connectScreen();
+    $('sGo').onclick = async () => {
+      try {
+        let dataText = null, shared = { version: 2 };
+        if (!hasData) {
+          const f = $('sData').files[0]; if (!f) throw new Error('Escolha o arquivo dados.js ou base_data.json.');
+          const t = await f.text(); const j = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
+          if (!Array.isArray(j.nfs) || !Array.isArray(j.spoolBase)) throw new Error('o arquivo não é a base do sistema (faltam nfs/spoolBase).');
+          dataText = JSON.stringify(j);
+        }
+        if (!hasState && $('sBackup').files[0]) {
+          const s = JSON.parse(await $('sBackup').files[0].text());
+          if (s.version !== 2 || !Array.isArray(s.movements)) throw new Error('o backup não é deste sistema.');
+          shared = pick(s);
+        }
+        busy(true, 'Enviando para o GitHub…');
+        if (dataText) await putFile(cfg, DATA_FILE, dataText, null, 'Base inicial (NFs e base de spools) · ' + cfg.login);
+        if (!hasState) await putFile(cfg, STATE_FILE, stateText(shared, 1), null, 'Histórico inicial' + (shared.packages ? ' (backup com ' + shared.packages.length + ' pacote(s))' : '') + ' · ' + cfg.login);
+        busy(false); location.reload();
+      } catch (e) { busy(false); setupScreen(hasData, hasState, e.message); }
+    };
+  }
+
+  /* ---- ciclo de vida ---- */
+  async function boot(start) {
+    if (!cfg) { if (window.SPOOL_BASE_DATA) return start(null); return connectScreen(); }
+    busy(true, 'Carregando dados do GitHub…');
+    try {
+      const dShaP = fileSha(cfg, DATA_FILE), st = await getFile(cfg, STATE_FILE), dSha = await dShaP;
+      if (!dSha || !st) { busy(false); return setupScreen(!!dSha, !!st); }
+      window.SPOOL_BASE_DATA = JSON.parse(await readBlob(cfg, dSha));
+      const o = JSON.parse(st.text); sha = st.sha; rev = o.rev || 0; savedAt = o.savedAt; savedBy = o.savedBy || '';
+      busy(false);
+      start({ shared: pick(o) });
+    } catch (e) {
+      busy(false);
+      gate(`<div class="card"><h2>Não foi possível carregar os dados</h2><div class="banner bad"><b>Erro</b>${esc(e.message)}</div>
+        <div class="flex"><button class="btn" id="eConn">Alterar conexão</button><span class="sp"></span><button class="btn pri" id="eRetry">Tentar de novo</button></div></div>`);
+      $('eConn').onclick = () => connectScreen(); $('eRetry').onclick = () => location.reload();
+    }
+  }
+  /* hooks: { get(): state, apply(shared), alert(title, html), canApply(), status() } */
+  function attach(h) {
+    hooks = h; lastJson = JSON.stringify(pick(h.get()));
+    setInterval(() => refresh(), 60000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh(); });
+    window.addEventListener('beforeunload', e => { if (inFlight || status === 'error') { e.preventDefault(); e.returnValue = ''; } });
+  }
+  const setStatus = (s, err) => { status = s; lastError = err || ''; if (hooks) hooks.status(); };
+  async function pullAndApply() {
+    const st = await getFile(cfg, STATE_FILE); const o = JSON.parse(st.text);
+    sha = st.sha; rev = o.rev || 0; savedAt = o.savedAt; savedBy = o.savedBy || '';
+    hooks.apply(pick(o)); lastJson = JSON.stringify(pick(hooks.get()));
+    return o;
+  }
+  /* Grava o estado compartilhado. Resolve true se gravou (ou não havia o que gravar). */
+  function push(msg) {
+    if (!cfg || !hooks) return Promise.resolve(true);
+    if (JSON.stringify(pick(hooks.get())) === lastJson && status !== 'error') return Promise.resolve(true);
+    chain = chain.then(() => doPush(msg), () => doPush(msg));
+    return chain;
+  }
+  async function doPush(msg) {
+    const json = JSON.stringify(pick(hooks.get()));
+    if (json === lastJson) { if (status === 'error') setStatus('ok'); return true; }
+    inFlight++; ls.set(PENDING_KEY, '1'); setStatus('saving'); busy(true, 'Gravando no GitHub…');
+    try {
+      const n = rev + 1;
+      sha = await putFile(cfg, STATE_FILE, stateText(JSON.parse(json), n), sha, (msg || 'Atualização') + ' · ' + cfg.login);
+      rev = n; lastJson = json; savedAt = new Date().toISOString(); savedBy = cfg.login;
+      ls.del(PENDING_KEY); setStatus('ok'); return true;
+    } catch (e) {
+      if (e.conflict) {
+        try {
+          const o = await pullAndApply(); ls.del(PENDING_KEY); setStatus('ok');
+          hooks.alert('Outra pessoa gravou antes', `<div class="banner warn"><b>Sua última ação NÃO foi gravada.</b>${esc(o.savedBy || 'Outro usuário')} gravou alterações em ${o.savedAt ? new Date(o.savedAt).toLocaleString('pt-BR') : '?'}. Os dados foram recarregados com a versão mais nova.</div><p>Confira a situação (saldo, histórico) e refaça a ação se ainda fizer sentido.</p>`);
+        } catch (e2) { setStatus('error', e2.message); }
+        return false;
+      }
+      setStatus('error', e.message);
+      hooks.alert('Não foi possível gravar no GitHub', `<div class="banner bad"><b>A alteração ficou só neste navegador.</b>${esc(e.message)}</div><p>Clique no aviso vermelho no topo para tentar de novo. Não feche a página antes de gravar.</p>`);
+      return false;
+    } finally { inFlight--; busy(false); }
+  }
+  /* Busca a versão mais nova (se outra pessoa gravou). Resolve true quando os dados locais estão atualizados. */
+  async function refresh(force) {
+    if (!cfg || !hooks || inFlight) return true;
+    if (JSON.stringify(pick(hooks.get())) !== lastJson) return push();
+    if (!force && !hooks.canApply()) return true;
+    try {
+      const s = await fileSha(cfg, STATE_FILE);
+      if (!s || s === sha) { if (status === 'error') setStatus('ok'); return true; }
+      const text = await readBlob(cfg, s); const o = JSON.parse(text);
+      if ((o.rev || 0) < rev) return true;              // leitura atrasada (cache do GitHub): fica com a nossa
+      if (inFlight || JSON.stringify(pick(hooks.get())) !== lastJson) return true;
+      sha = s; rev = o.rev || 0; savedAt = o.savedAt; savedBy = o.savedBy || '';
+      hooks.apply(pick(o)); lastJson = JSON.stringify(pick(hooks.get()));
+      setStatus('ok'); return true;
+    } catch (e) { setStatus('error', e.message); return false; }
+  }
+  function statusHtml() {
+    const when = savedAt ? new Date(savedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+    if (status === 'saving') return '<span class="chip info">gravando no GitHub…</span>';
+    if (status === 'error') return `<span class="chip bad retry" id="ghRetry" title="${esc(lastError)}">não gravado no GitHub · clique para tentar de novo</span>`;
+    return `GitHub · ${esc(cfg.owner + '/' + cfg.repo)} · <span title="última gravação">${esc(when)}${savedBy ? ' por ' + esc(savedBy) : ''}</span>`;
+  }
+  function disconnect() { ls.del(CFG_KEY); ls.del(PENDING_KEY); location.reload(); }
+  return {
+    get on() { return !!(cfg && hooks); }, get cfg() { return cfg; }, SHARED, pick,
+    hadPending: () => !!(cfg && ls.get(PENDING_KEY)), clearPending: () => ls.del(PENDING_KEY),
+    boot, attach, push, refresh, statusHtml, connectScreen, disconnect, retry: () => push('Nova tentativa')
+  };
+})();
+</script>
+<script>
+/* NF parsing: XML (NF-e) and DANFE PDF text. Shared by the app and the Node tests. */
+const NFParse = (() => {
+  const unesc = s => String(s ?? '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (_, d) => String.fromCharCode(+d)).replace(/&amp;/g, '&');
+  const tag = (xml, name) => { const m = xml.match(new RegExp('<(?:\\w+:)?' + name + '(?:\\s[^>]*)?>([\\s\\S]*?)</(?:\\w+:)?' + name + '>')); return m ? unesc(m[1]).trim() : ''; };
+  const brNum = s => Number(String(s).replace(/\./g, '').replace(',', '.'));
+  const CODE_RE = /^BB-[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]{3}-[A-Z0-9]{3}$/;
+
+  function parseXML(text) {
+    const inf = (text.match(/<infNFe[\s\S]*?<\/infNFe>/) || [text])[0];
+    const id = (inf.match(/Id="NFe(\d{44})"/) || [])[1] || '';
+    const ide = tag(inf, 'ide'), emit = tag(inf, 'emit'), dest = tag(inf, 'dest');
+    const head = {
+      nf: String(Number(tag(ide, 'nNF')) || ''), date: tag(ide, 'dhEmi').slice(0, 10) || tag(ide, 'dEmi').slice(0, 10),
+      tpNF: tag(ide, 'tpNF'), natOp: tag(ide, 'natOp'), key: id,
+      emitCNPJ: tag(emit, 'CNPJ'), emitName: tag(emit, 'xNome'), destCNPJ: tag(dest, 'CNPJ'), destName: tag(dest, 'xNome'),
+      totalProducts: Number(tag(tag(inf, 'ICMSTot'), 'vProd')) || null
+    };
+    const items = [];
+    const re = /<det\s+nItem="(\d+)"[^>]*>([\s\S]*?)<\/det>/g; let m;
+    while ((m = re.exec(inf))) {
+      const p = tag(m[2], 'prod');
+      let code = tag(p, 'cProd'); let desc = tag(p, 'xProd').replace(/\s+/g, ' ');
+      const par = desc.match(/\((BB-[^()]+)\)\s*$/);           // formato "ajustadoStepUp": código sem traços + código original no fim da descrição
+      if (par && !code.includes('-')) { code = par[1].trim(); desc = desc.replace(/\s*\((BB-[^()]+)\)\s*$/, ''); }
+      items.push({ item: +m[1], codeNF: code, desc, ncm: tag(p, 'NCM'), cfop: tag(p, 'CFOP'), unit: tag(p, 'uCom').toUpperCase(), qty: Number(tag(p, 'qCom')), vu: Number(tag(p, 'vUnCom')), total: Number(tag(p, 'vProd')) });
+    }
+    return { head, items, source: 'XML', warnings: [] };
+  }
+
+  /* Rebuild text lines from pdf.js text items: [{str, x, y, w}] per page (y top-down not required). */
+  function linesFromItems(items) {
+    const rows = [];
+    items.filter(i => i.str && i.str.trim()).sort((a, b) => b.y - a.y || a.x - b.x).forEach(it => {
+      let row = rows.find(r => Math.abs(r.y - it.y) <= 2.2);
+      if (!row) { row = { y: it.y, parts: [] }; rows.push(row); }
+      row.parts.push(it);
+    });
+    rows.sort((a, b) => b.y - a.y);
+    return rows.map(r => {
+      r.parts.sort((a, b) => a.x - b.x);
+      let s = '', end = null;
+      r.parts.forEach(p => { if (end !== null) s += (p.x - end > 1.2) ? '  ' : ''; s += p.str; end = p.x + (p.w || 0); });
+      return s;
+    });
+  }
+
+  const LINE = /^\s*(BB-\S+?)\s+(.*?)\s+(\d{8})\s+(\d{3})\s+(\d{4})\s+([A-ZÇ]{1,5})\s+([\d.]+,\d+)\s+([\d.]+,\d+)\s+([\d.]+,\d+)/;
+  function parseDanfeText(lines) {
+    const txt = lines.join('\n');
+    const items = [], warnings = [];
+    for (let i = 0; i < lines.length; i++) {
+      const m = lines[i].match(LINE);
+      if (!m) continue;
+      let code = m[1];
+      const tok = (lines[i + 1] || '').trim().split(/\s+/)[0] || '';
+      if (!CODE_RE.test(code) && CODE_RE.test(code + tok)) code += tok;     // código quebrado em duas linhas
+      items.push({ item: items.length + 1, codeNF: code, desc: m[2].replace(/\s+/g, ' ').trim(), ncm: m[3], cfop: m[5], unit: m[6], qty: brNum(m[7]), vu: brNum(m[8]), total: brNum(m[9]) });
+    }
+    if (!items.length) parseBlocks(lines, items);   // layout alternativo (DANFE PDFium: código quebrado em várias linhas)
+    const nf = txt.match(/N[º°o]\.?\s*0*(\d{1,3})\.(\d{3})\.(\d{3})/) || (m => m ? [m[0], '', '', m[1]] : null)(txt.match(/N[º°o]\.?\s*(\d{4,9})\b/));
+    const date = txt.match(/DATA DA EMISS[ÃA]O[\s\S]{0,400}?(\d{2})\/(\d{2})\/(\d{4})/);
+    const tp = txt.match(/1\s*-\s*SA[ÍI]DA\s+([01])/);
+    const nat = txt.match(/NATUREZA DA OPERA[ÇC][ÃA]O[^\n]*\n(?:\s*\n)*\s*(\S.*?)(?:\s{2,}|\n)/);
+    const key = txt.match(/((?:\d{4}\s){10}\d{4})/);
+    const tot = txt.match(/VALOR TOTAL DOS PRODUTOS[\s\S]*?([\d.]+,\d{2})\s*(?:\n|$)/);
+    const head = {
+      nf: nf ? String(Number(nf[1] + nf[2] + nf[3])) : '', date: date ? `${date[3]}-${date[2]}-${date[1]}` : '',
+      tpNF: tp ? tp[1] : '', natOp: nat ? nat[1].trim() : '', key: key ? key[1].replace(/\s/g, '') : '',
+      emitCNPJ: (txt.match(/(\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})/) || [])[1]?.replace(/\D/g, '') || '', totalProducts: tot ? brNum(tot[1]) : null
+    };
+    items.forEach(it => { if (!CODE_RE.test(it.codeNF) && /^BB-PP-/.test(it.codeNF)) warnings.push(`Item ${it.item}: código "${it.codeNF}" fora do padrão — confira no PDF.`); });
+    return { head, items, source: 'PDF', warnings };
+  }
+
+  /* Layout B: linha "BB-PP-  descrição", depois "NCM CST CFOP UN QTD [VUNIT] TOTAL" e o resto do código em linhas seguintes */
+  const NUMS = /^\s*(\d{8})\s+(\d{3})\s+(\d{4})\s+([A-ZÇ]{1,5})\s+([\d.]+(?:,\d+)?)\s+(?:([\d.]+,\d+)\s+)?([\d.]+,\d{2})\s*$/;
+  function parseBlocks(lines, items) {
+    for (let i = 0; i < lines.length; i++) {
+      const first = lines[i].trim();
+      if (!/^BB-/.test(first)) continue;
+      const toks = first.split(/\s{2,}/); let code = toks[0].split(/\s+/)[0];
+      let desc = first.slice(code.length).trim().replace(/\s{2,}[\d.,]+\s*$/, '');
+      let nums = null, j = i + 1;
+      for (; j < lines.length; j++) {
+        const t = lines[j].trim(); if (!t || /^BB-/.test(t) || /^DADOS ADICIONAIS/.test(t)) break;
+        const m = t.match(NUMS); if (m && !nums) { nums = m; continue; }
+        const tok = t.split(/\s+/)[0];
+        if (!CODE_RE.test(code) && /^[A-Z0-9][A-Z0-9-]*$/.test(tok)) code += tok;
+      }
+      if (nums) { const qty = brNum(nums[5]), total = brNum(nums[7]); items.push({ item: items.length + 1, codeNF: code, desc: desc.replace(/\s+/g, ' '), ncm: nums[1], cfop: nums[3], unit: nums[4], qty, vu: qty ? Math.round(total / qty * 1e6) / 1e6 : 0, total }); }
+      i = j - 1;
+    }
+  }
+  function check(parsed) {
+    const w = parsed.warnings.slice();
+    const sum = Math.round(parsed.items.reduce((a, i) => a + (i.total || 0), 0) * 100) / 100;
+    parsed.sumItems = sum;
+    if (parsed.head.totalProducts != null && Math.abs(sum - parsed.head.totalProducts) > 0.05) w.push(`Soma dos itens (R$ ${sum.toFixed(2)}) difere do valor total dos produtos da NF (R$ ${parsed.head.totalProducts.toFixed(2)}). Algum item pode não ter sido lido.`);
+    if (!parsed.head.tpNF && parsed.items.length) parsed.head.tpNF = /^[123]/.test(parsed.items[0].cfop || '') ? '0' : '1';   // tipo pela CFOP (1xxx-3xxx = entrada)
+    if (parsed.head.tpNF === '0') w.push('NF de ENTRADA (tipo 0). Não é remessa de material para a Step: não deve entrar no saldo.');
+    if (parsed.head.emitCNPJ && !parsed.head.emitCNPJ.startsWith('03669753')) w.push(`Emitente ${parsed.head.emitCNPJ} não é a Brasfels.`);
+    if (!parsed.items.length) w.push('Nenhum item encontrado.');
+    parsed.warnings = w; parsed.totalOk = parsed.head.totalProducts != null && Math.abs(sum - parsed.head.totalProducts) <= 0.05;
+    return parsed;
+  }
+  return { parseXML: t => check(parseXML(t)), linesFromItems, parseDanfeText: l => check(parseDanfeText(l)) };
+})();
+if (typeof module !== 'undefined') module.exports = NFParse;
+
+/* Motor de cálculo: consumo por spool, FIFO por NF, atribuição por spool. Sem dependência de DOM. */
+const Engine = (() => {
+  const EPS = 1e-6;
+  const r6 = x => Math.round((+x || 0) * 1e6) / 1e6;
+  const normalize = (code, prefixes) => {
+    let x = String(code || '').trim().toUpperCase();
+    for (const p of prefixes || []) { const P = String(p || '').trim().toUpperCase(); if (P && x.startsWith(P)) { x = x.slice(P.length); break; } }
+    return x.trim();
+  };
+  const inferUnit = (code, desc) => (/^PP-P\d/.test(code) || /^\s*PIPE\b/i.test(desc || '')) ? 'M' : 'PC';
+  const unitAlias = (u, aliases) => { const k = String(u || '').trim().toUpperCase(); return (aliases && aliases[k]) || k; };
+  const cmpLine = (a, b) => (a.date || '').localeCompare(b.date || '') || (+a.nf - +b.nf) || String(a.nf).localeCompare(String(b.nf)) || a.item - b.item;
+
+  /* ctx = { spoolRows, nfs:[{nf,date,key,status,items}], movements, config:{prefixes,aliases,factors,unitOverrides}, baseUnits } */
+  function prepare(ctx) {
+    const cfg = ctx.config || {};
+    const spoolIndex = new Map(), codeDesc = new Map(), baseCodes = new Set();
+    (ctx.spoolRows || []).forEach((r, i) => {
+      const [spool, code, desc, qty] = r; const key = String(spool).trim().toUpperCase();
+      if (!spoolIndex.has(key)) spoolIndex.set(key, []);
+      spoolIndex.get(key).push({ spool: String(spool).trim(), code: String(code).trim().toUpperCase(), desc, qty: +qty || 0, module: r[5], row: i });
+      baseCodes.add(String(code).trim().toUpperCase()); if (!codeDesc.has(String(code).trim().toUpperCase())) codeDesc.set(String(code).trim().toUpperCase(), desc);
+    });
+    const allLines = [];
+    (ctx.nfs || []).forEach(nf => (nf.items || []).forEach(it => {
+      allLines.push({
+        lineId: nf.nf + '-' + it.item, nf: String(nf.nf), date: nf.date, key: nf.key || '', nfStatus: nf.status || 'ATIVA', item: +it.item,
+        codeNF: it.codeNF, code: normalize(it.codeNF, cfg.prefixes), desc: it.desc, unitRaw: it.unit, unit: unitAlias(it.unit, cfg.aliases),
+        qty: +it.qty || 0, vu: +it.vu || 0, inBase: false
+      });
+    }));
+    allLines.forEach(l => { l.inBase = baseCodes.has(l.code); });
+    allLines.sort(cmpLine);
+    const lines = allLines.filter(l => l.nfStatus === 'ATIVA');
+    const nfUnits = new Map();
+    lines.forEach(l => { if (!nfUnits.has(l.code)) nfUnits.set(l.code, new Set()); nfUnits.get(l.code).add(l.unit); });
+    const unitCache = new Map();
+    function unitInfo(code) {
+      if (unitCache.has(code)) return unitCache.get(code);
+      const base = unitAlias((cfg.unitOverrides || {})[code] || (ctx.baseUnits || {})[code] || inferUnit(code, codeDesc.get(code)), cfg.aliases);
+      const set = nfUnits.get(code); const nfU = set ? [...set] : [];
+      const f = (cfg.factors || {})[code];
+      let status, factor = null;
+      if (!nfU.length) { status = 'SEM NF'; factor = 1; }
+      else if (nfU.length > 1) status = 'MISTA';
+      else if (nfU[0] === base) { status = 'OK'; factor = 1; }
+      else if (f > 0) { status = 'CONVERTIDO'; factor = +f; }
+      else status = 'DIVERGENTE';
+      const info = { code, baseUnit: base, nfUnit: nfU.join('/') || '', status, factor };
+      unitCache.set(code, info); return info;
+    }
+    return { cfg, spoolIndex, codeDesc, baseCodes, allLines, lines, unitInfo };
+  }
+
+  function returnedByLine(movements, excludePkg) {
+    const m = new Map();
+    (movements || []).forEach(v => { if (v.status === 'LANÇADO' && v.pkg !== excludePkg) m.set(v.lineId, r6((m.get(v.lineId) || 0) + v.qty)); });
+    return m;
+  }
+
+  function parseSpoolList(text) {
+    const t = String(text || '').toUpperCase();
+    const tags = t.match(/IS-[A-Z0-9]+(?:-[A-Z0-9]+)+/g);
+    if (tags && tags.length) return tags;
+    return t.split(/[\s,;|]+/).map(s => s.trim()).filter(Boolean);
+  }
+
+  function compute(ctx, pkg, prep) {
+    const P = prep || prepare(ctx);
+    const pkgId = (pkg && pkg.id || '').trim();
+    const returned = returnedByLine(ctx.movements, pkgId);
+    const shipped = new Map();
+    (ctx.movements || []).forEach(v => { if (v.status === 'LANÇADO' && v.spool && v.pkg !== pkgId) shipped.set(String(v.spool).toUpperCase(), v.pkg); });
+    // 1. spools
+    const seen = new Set();
+    const spools = (pkg && pkg.spools || []).map(s => {
+      const key = String(s).trim().toUpperCase(); const rows = P.spoolIndex.get(key);
+      let status = 'OK', prev = '';
+      if (!rows) status = 'NÃO ENCONTRADO';
+      else if (seen.has(key)) status = 'DUPLICADO';
+      else if (shipped.has(key)) { status = 'JÁ ENVIADO'; prev = shipped.get(key); }
+      seen.add(key);
+      return { spool: rows ? rows[0].spool : String(s).trim(), status, prev, nMat: rows ? rows.length : 0, module: rows ? rows[0].module : '' };
+    });
+    // 2. demanda
+    const demandLines = [];
+    spools.filter(s => s.status === 'OK').forEach(s => P.spoolIndex.get(s.spool.toUpperCase()).forEach(r => {
+      const u = P.unitInfo(r.code);
+      demandLines.push({ row: r.row, spool: r.spool, code: r.code, desc: r.desc, qtyBase: r6(r.qty), unitBase: u.baseUnit, qtyNF: u.factor == null ? null : r6(r.qty * u.factor), unitNF: u.nfUnit || u.baseUnit });
+    }));
+    const codes = new Map();
+    demandLines.forEach(d => {
+      if (!codes.has(d.code)) { const u = P.unitInfo(d.code); codes.set(d.code, { code: d.code, desc: d.desc, unitBase: u.baseUnit, unitNF: u.nfUnit, unitStatus: u.status, factor: u.factor, demandBase: 0, demandNF: 0, spools: new Set() }); }
+      const c = codes.get(d.code); c.demandBase = r6(c.demandBase + d.qtyBase); if (d.qtyNF != null) c.demandNF = r6(c.demandNF + d.qtyNF); c.spools.add(d.spool);
+    });
+    // 3. FIFO
+    const lines = P.allLines.map(l => {
+      const ret = returned.get(l.lineId) || 0;
+      return { ...l, returned: ret, before: r6(l.qty - ret), withdrawn: 0, after: r6(l.qty - ret) };
+    });
+    const byCode = new Map();
+    lines.forEach(l => { if (l.nfStatus !== 'ATIVA') return; if (!byCode.has(l.code)) byCode.set(l.code, []); byCode.get(l.code).push(l); });
+    codes.forEach(c => {
+      const ls = byCode.get(c.code) || [];
+      c.available = r6(ls.reduce((a, l) => a + Math.max(0, l.before), 0));
+      const canDebit = c.unitStatus === 'OK' || c.unitStatus === 'CONVERTIDO';
+      let left = canDebit ? c.demandNF : 0;
+      ls.forEach(l => { if (left <= EPS) return; const t = r6(Math.min(Math.max(0, l.before), left)); if (t > EPS) { l.withdrawn = t; l.after = r6(l.before - t); left = r6(left - t); } });
+      c.allocated = r6((canDebit ? c.demandNF : 0) - left);
+      c.shortage = canDebit ? r6(Math.max(0, c.demandNF - c.allocated)) : c.demandBase;
+      c.status = (c.unitStatus === 'DIVERGENTE' || c.unitStatus === 'MISTA') ? 'UNIDADE DIVERGENTE' : c.shortage > EPS ? (c.unitStatus === 'SEM NF' ? 'SEM NF' : 'FALTA SALDO') : 'OK';
+      c.nfs = [...new Set(ls.filter(l => l.withdrawn > EPS).map(l => l.nf))];
+      c.after = r6(c.available - c.allocated);
+      c.spools = [...c.spools];
+    });
+    lines.forEach(l => {
+      l.itemStatus = l.nfStatus !== 'ATIVA' ? 'NF ' + l.nfStatus : l.after < -EPS ? 'SALDO NEGATIVO' : l.after <= EPS ? (l.withdrawn > EPS ? 'ZERA NESTE PACOTE' : 'ZERADO') : 'ABERTO';
+    });
+    // 4. atribuição por spool (sobreposição de faixas acumuladas)
+    const details = [];
+    const dByCode = new Map(); demandLines.forEach(d => { if (!dByCode.has(d.code)) dByCode.set(d.code, []); dByCode.get(d.code).push(d); });
+    dByCode.forEach((ds, code) => {
+      ds.sort((a, b) => a.row - b.row);   // mesma ordem da base de spools (igual à versão Excel)
+      const al = (byCode.get(code) || []).filter(l => l.withdrawn > EPS);
+      let i = 0, rem = al.length ? al[0].withdrawn : 0;
+      ds.forEach(d => {
+        let need = d.qtyNF == null ? d.qtyBase : d.qtyNF;   // unidade divergente: nada é debitado, tudo fica como falta
+        if (d.qtyNF == null) { details.push({ spool: d.spool, code, desc: d.desc, unit: d.unitBase, qty: need, nf: '', item: '', lineId: '', date: '', missing: true }); return; }
+        while (need > EPS && i < al.length) {
+          const t = r6(Math.min(need, rem));
+          if (t > EPS) details.push({ spool: d.spool, code, desc: d.desc, unit: al[i].unit, qty: t, nf: al[i].nf, item: al[i].item, lineId: al[i].lineId, date: al[i].date, vu: al[i].vu, codeNF: al[i].codeNF });
+          need = r6(need - t); rem = r6(rem - t);
+          if (rem <= EPS) { i++; rem = i < al.length ? al[i].withdrawn : 0; }
+        }
+        if (need > EPS) details.push({ spool: d.spool, code, desc: d.desc, unit: d.unitNF, qty: need, nf: '', item: '', lineId: '', date: '', missing: true });
+      });
+    });
+    // 4b. faltas por spool (auditoria): todo spool que usa um código com problema, com o que foi atendido e o que falta
+    const codeStatus = new Map([...codes.values()].map(c => [c.code, c]));
+    const cover = new Map(), miss = new Map();
+    details.forEach(d => { const k = d.spool + '|' + d.code; const m = d.missing ? miss : cover; m.set(k, r6((m.get(k) || 0) + d.qty)); });
+    const shortSpools = [];
+    demandLines.forEach(d => {
+      const c = codeStatus.get(d.code); if (!c || c.status === 'OK') return;
+      const k = d.spool + '|' + d.code;
+      if (shortSpools.some(x => x.key === k)) return;
+      const need = demandLines.filter(x => x.spool === d.spool && x.code === d.code).reduce((a, x) => a + (x.qtyNF == null ? x.qtyBase : x.qtyNF), 0);
+      shortSpools.push({ key: k, spool: d.spool, code: d.code, desc: d.desc, unit: d.qtyNF == null ? d.unitBase : d.unitNF, need: r6(need), covered: cover.get(k) || 0, missing: miss.get(k) || 0, status: c.status, codeShortage: c.shortage, codeAvailable: c.available, unitBase: c.unitBase, unitNF: c.unitNF });
+    });
+    const spoolsWithMissing = [...new Set(shortSpools.filter(x => x.missing > EPS).map(x => x.spool))];
+    const spoolsUsingBad = [...new Set(shortSpools.map(x => x.spool))];
+    // integridade: movimentos que apontam para linha de NF inexistente ou inativa
+    const lineIds = new Map(P.allLines.map(l => [l.lineId, l]));
+    const orphans = (ctx.movements || []).filter(v => v.status === 'LANÇADO' && (!lineIds.has(v.lineId) || lineIds.get(v.lineId).nfStatus !== 'ATIVA'));
+    // 5. resumo por NF
+    const nfMap = new Map();
+    lines.forEach(l => {
+      if (!nfMap.has(l.nf)) nfMap.set(l.nf, { nf: l.nf, date: l.date, key: l.key, status: l.nfStatus, items: 0, zeroed: 0, withdrawnLines: 0, zeroingNow: 0, valueWithdrawn: 0 });
+      const n = nfMap.get(l.nf); n.items++;
+      if (l.after <= EPS) n.zeroed++;
+      if (l.withdrawn > EPS) { n.withdrawnLines++; n.valueWithdrawn += l.withdrawn * l.vu; }
+      if (l.itemStatus === 'ZERA NESTE PACOTE') n.zeroingNow++;
+    });
+    const nfSummary = [...nfMap.values()].map(n => ({
+      ...n, valueWithdrawn: Math.round(n.valueWithdrawn * 100) / 100,
+      situation: n.status !== 'ATIVA' ? n.status : n.zeroed === n.items ? (n.withdrawnLines ? 'DEVOLUÇÃO TOTAL (NESTE PACOTE)' : 'DEVOLUÇÃO TOTAL') : n.zeroed ? `PARCIAL (${n.zeroed} de ${n.items} itens zerados)` : 'ABERTA'
+    }));
+    // 6. bloqueios
+    const blockers = [];
+    const bad = spools.filter(s => s.status === 'NÃO ENCONTRADO' || s.status === 'JÁ ENVIADO');
+    if (!spools.length) blockers.push('Informe os spools do pacote.');
+    if (bad.length) blockers.push(`${bad.length} spool(s) não encontrado(s) na base ou já enviado(s) em outro pacote.`);
+    const cl = [...codes.values()];
+    const div = cl.filter(c => c.status === 'UNIDADE DIVERGENTE'); if (div.length) blockers.push(`${div.length} código(s) com unidade divergente sem fator de conversão.`);
+    const sh = cl.filter(c => c.status === 'FALTA SALDO' || c.status === 'SEM NF'); if (sh.length) blockers.push(`${sh.length} código(s) sem saldo suficiente nas NFs.`);
+    const neg = lines.filter(l => l.itemStatus === 'SALDO NEGATIVO'); if (neg.length) blockers.push(`${neg.length} linha(s) de NF com saldo negativo (verifique o histórico).`);
+    if (orphans.length) blockers.push(`${orphans.length} movimento(s) do histórico apontam para NF inexistente ou inativa. Reative a NF ou exclua o lote.`);
+    if (!pkgId) blockers.push('Informe o identificador do pacote.');
+    const already = (ctx.movements || []).some(v => v.pkg === pkgId && v.status === 'LANÇADO');
+    if (pkgId && already) blockers.unshift(`O pacote ${pkgId} já foi lançado. Use outro identificador ou estorne o anterior.`);
+    return {
+      pkgId, spools, demandLines, codes: cl, lines, allocations: lines.filter(l => l.withdrawn > EPS), details,
+      nfSummary, nfInvolved: nfSummary.filter(n => n.withdrawnLines > 0), blockers, ok: blockers.length === 0, already,
+      shortSpools, spoolsWithMissing, spoolsUsingBad, orphans
+    };
+  }
+
+  function movementsFromResult(res, date) {
+    const now = new Date().toISOString();
+    return res.details.filter(d => !d.missing).map((d, i) => ({ id: res.pkgId + '#' + (i + 1), pkg: res.pkgId, date, spool: d.spool, nf: d.nf, item: d.item, lineId: d.lineId, code: d.code, codeNF: d.codeNF, desc: d.desc, unit: d.unit, qty: d.qty, vu: d.vu, status: 'LANÇADO', kind: 'PACOTE', createdAt: now }));
+  }
+  /* Reconstrói o saldo lote a lote, em ordem de lançamento. lots = [{id, createdAt, ...}] (só LANÇADOS contam). */
+  function replay(ctx, lots, prep) {
+    const P = prep || prepare(ctx);
+    const base = P.allLines.filter(l => l.nfStatus === 'ATIVA');
+    const byLot = new Map();
+    (ctx.movements || []).forEach(v => { if (v.status !== 'LANÇADO') return; if (!byLot.has(v.pkg)) byLot.set(v.pkg, new Map()); const m = byLot.get(v.pkg); m.set(v.lineId, r6((m.get(v.lineId) || 0) + v.qty)); });
+    const ordered = lots.filter(p => p.status === 'LANÇADO').slice().sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
+    const cum = new Map(); const steps = [];
+    ordered.forEach(p => {
+      const w = byLot.get(p.id) || new Map(); const before = new Map(cum);
+      w.forEach((q, id) => cum.set(id, r6((cum.get(id) || 0) + q)));
+      steps.push({ lot: p, withdrawn: w, returnedBefore: before, returnedAfter: new Map(cum) });
+    });
+    return { lines: base, steps };
+  }
+  return { replay, EPS, r6, normalize, inferUnit, prepare, compute, parseSpoolList, movementsFromResult, returnedByLine };
+})();
+if (typeof module !== 'undefined') module.exports = Engine;
+
+function startApp(remote) {
+'use strict';
+const DATA = window.SPOOL_BASE_DATA;
+const KEY = 'devolucao-spools-brasfels-v2';
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nfmt = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 });
+const mfmt = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const q = v => (v === '' || v == null || isNaN(v)) ? '' : nfmt.format(Engine.r6(v));
+const money = v => mfmt.format(+v || 0);
+const dt = iso => iso ? String(iso).slice(0, 10).split('-').reverse().join('/') : '';
+const todayISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const parseNum = s => { s = String(s ?? '').trim().replace(/\s/g, ''); if (!s) return NaN; if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.'); return Number(s); };
+const chipCls = s => /DEVOLUÇÃO TOTAL|^OK$|LANÇADO|ATIVA|CONVERTIDO/.test(s) ? 'ok' : /ZERA NESTE|PARCIAL|DUPLICADO|AGUARDANDO|MISTA|DIVERGENTE/.test(s) ? 'warn' : /FALTA|SEM NF|NÃO ENCONTRADO|JÁ ENVIADO|NEGATIVO|BLOQ/.test(s) ? 'bad' : /ZERADO|ESTORNADO|INATIVA|RECUSADA|ENTRADA/.test(s) ? 'mute' : 'info';
+const chip = s => s ? `<span class="chip ${chipCls(s)}">${esc(s)}</span>` : '';
+
+/* ---------------- estado ---------------- */
+const DEFAULT_ALIASES = { MT: 'M', MTS: 'M', METRO: 'M', 'PÇ': 'PC', PCS: 'PC', PECA: 'PC', 'PEÇA': 'PC', UND: 'UN' };
+function freshState() {
+  return { version: 2, config: { prefixes: ['BB-'], aliases: { ...DEFAULT_ALIASES }, factors: {}, unitOverrides: {} }, addedNfs: [], nfStatus: {}, movements: [], packages: [], deletions: [], draft: { id: '', date: todayISO(), spools: [] }, spoolBase: null, savedAt: null, lastBackup: null };
+}
+let state;
+try { state = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { state = null; }
+if (!state || state.version !== 2) state = freshState();
+let unsyncedLocal = null;   // alterações deste navegador que não chegaram ao GitHub na sessão anterior
+if (remote && Sync.hadPending()) {
+  const loc = JSON.stringify(Sync.pick(state)), rem = JSON.stringify(Sync.pick(remote.shared));
+  if (loc !== rem) unsyncedLocal = JSON.parse(JSON.stringify(state));
+  Sync.clearPending();
+}
+/* No modo GitHub o histórico vem do repositório; só o rascunho do pacote é deste navegador. */
+function applyShared(shared) {
+  const fs = freshState();
+  Sync.SHARED.forEach(k => { state[k] = shared[k] !== undefined ? shared[k] : fs[k]; });
+  state.version = 2;
+}
+if (remote) applyShared(remote.shared);
+function normalizeState() {
+  state.config = { ...freshState().config, ...state.config };
+  if (!Array.isArray(state.deletions)) state.deletions = [];
+}
+normalizeState();
+let storageOk = true;
+/* Grava neste navegador e, conectado, no GitHub. Retorna Promise<boolean> (false = não gravou no GitHub). */
+function save(msg) {
+  state.savedAt = new Date().toISOString();
+  try { localStorage.setItem(KEY, JSON.stringify(state)); storageOk = true; } catch (e) { storageOk = false; }
+  const p = remote ? Sync.push(msg) : Promise.resolve(true);
+  renderSaveState();
+  return p;
+}
+function renderSaveState() {
+  const el = $('saveState');
+  if (remote) { el.innerHTML = Sync.statusHtml(); return; }
+  if (!storageOk) { el.innerHTML = '<span class="chip bad">não foi possível salvar no navegador · faça backup</span>'; return; }
+  const lb = state.lastBackup ? 'backup ' + new Date(state.lastBackup).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : 'sem backup';
+  const pendingBackup = state.movements.length && (!state.lastBackup || state.lastBackup < state.savedAt);
+  el.innerHTML = 'Salvo no navegador · ' + (pendingBackup ? '<span class="chip warn">' + esc(lb) + '</span>' : esc(lb));
+}
+
+/* ---------------- contexto de cálculo ---------------- */
+let prepCache = null, prepKey = '';
+function spoolRows() { return state.spoolBase ? state.spoolBase.rows : DATA.spoolBase; }
+function baseUnits() { const m = {}; DATA.units.forEach(u => { m[u.code] = u.baseUnit; }); return m; }
+const BASE_UNITS = baseUnits();
+function allNfs() {
+  const base = DATA.nfs.map(n => ({ ...n, status: state.nfStatus[n.nf] || 'ATIVA', origin: 'Base inicial (' + n.parser + ')' }));
+  const baseSet = new Set(DATA.nfs.map(n => n.nf));   // NF importada que depois entrou na base: vale a da base (mesmos itens)
+  const added = state.addedNfs.filter(n => !baseSet.has(n.nf)).map(n => ({ ...n, status: state.nfStatus[n.nf] || n.status || 'ATIVA' }));
+  return base.concat(added);
+}
+function ctx() { return { spoolRows: spoolRows(), nfs: allNfs(), movements: state.movements, config: state.config, baseUnits: BASE_UNITS }; }
+function prep() {
+  const k = JSON.stringify([state.config, state.nfStatus, state.addedNfs.length, state.addedNfs.map(n => n.nf + n.status).join(), state.spoolBase ? state.spoolBase.importedAt : 'orig']);
+  if (!prepCache || k !== prepKey) { prepCache = Engine.prepare(ctx()); prepKey = k; }
+  return prepCache;
+}
+function computeDraft() { return Engine.compute(ctx(), { id: state.draft.id, spools: state.draft.spools }, prep()); }
+function computeCurrent() { return Engine.compute(ctx(), { id: '\u0000', spools: [] }, prep()); }
+
+/* ---------------- UI geral ---------------- */
+function toast(msg, err) { const t = $('toast'); t.textContent = msg; t.className = 'toast on' + (err ? ' err' : ''); clearTimeout(toast.t); toast.t = setTimeout(() => t.className = 'toast', err ? 6000 : 3500); }
+function modal(title, html) { $('mTitle').textContent = title; $('mBody').innerHTML = html; $('modal').classList.add('on'); }
+let modalResolve = null;
+function closeModal() { $('modal').classList.remove('on'); if (modalResolve) { const r = modalResolve; modalResolve = null; r(); } }
+$('mClose').onclick = closeModal;
+$('modal').addEventListener('mousedown', e => { if (e.target.id === 'modal') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+let view = 'pacote';
+$('tabs').onclick = e => { const b = e.target.closest('button[data-v]'); if (!b) return; view = b.dataset.v; document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + view)); render(); };
+function render() {
+  const res = computeDraft();
+  renderPendCount(res);
+  if (view === 'pacote') renderPacote(res);
+  if (view === 'saldo') renderSaldo();
+  if (view === 'notas') renderNotas();
+  if (view === 'historico') renderHist();
+  if (view === 'pend') renderPend(res);
+  if (view === 'config') renderConfig();
+  const sb = state.spoolBase; const nAct = allNfs().filter(n => n.status === 'ATIVA').length;
+  $('baseInfo').textContent = `${nAct} NFs ativas · base de spools ${sb ? sb.file : DATA.spoolBaseFile.replace(/_\d.*$/, '')}`;
+}
+
+/* ---------------- PACOTE ---------------- */
+let pkgSeg = 'nf';
+$('pkgSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; pkgSeg = b.dataset.s; [...$('pkgSeg').children].forEach(x => x.classList.toggle('on', x === b)); renderPacote(computeDraft()); };
+$('pkgId').oninput = e => { state.draft.id = e.target.value.trim(); save(); renderPacote(computeDraft()); };
+$('pkgDate').onchange = e => { state.draft.date = e.target.value; save(); };
+$('btnAddSpools').onclick = () => {
+  const list = Engine.parseSpoolList($('spoolPaste').value);
+  if (!list.length) return toast('Nenhum spool encontrado no texto colado.', true);
+  state.draft.spools = state.draft.spools.concat(list); $('spoolPaste').value = ''; save(); render();
+  toast(list.length + ' spool(s) adicionados.');
+};
+$('btnClearPkg').onclick = () => { if (!state.draft.spools.length || confirm('Limpar a lista de spools do pacote?')) { state.draft.spools = []; state.draft.removed = []; save(); render(); } };
+$('spoolList').onclick = e => { const b = e.target.closest('[data-rm]'); if (!b) return; state.draft.spools.splice(+b.dataset.rm, 1); save(); render(); };
+
+function renderPacote(res) {
+  if (document.activeElement !== $('pkgId')) $('pkgId').value = state.draft.id || '';
+  $('pkgDate').value = state.draft.date || todayISO();
+  const sp = res.spools;
+  $('spoolCount').textContent = `${sp.length} spool(s) · ${sp.filter(s => s.status === 'OK').length} OK`;
+  const probs = sp.filter(s => s.status !== 'OK').length;
+  $('spoolFilterInfo').innerHTML = probs ? chip(probs + ' com problema') : '';
+  $('spoolList').innerHTML = sp.length ? sp.map((s, i) => `<div><span class="t" title="${esc(s.spool)}">${esc(s.spool)}</span>${s.status === 'OK' ? `<span class="muted">${s.nMat} mat.</span>` : chip(s.status + (s.prev ? ' · ' + s.prev : ''))}<button class="x" data-rm="${i}" title="Remover">×</button></div>`).join('') : '<div class="muted" style="justify-content:center;padding:16px">Nenhum spool no pacote.</div>';
+  // banner
+  let b;
+  if (!sp.length) b = `<div class="banner info"><b>Monte o pacote</b>Cole os tags dos spools ao lado. O sistema calcula o material, escolhe as NFs pelo FIFO e mostra tudo antes da baixa.</div>`;
+  else if (res.ok) b = `<div class="banner ok"><b>Pronto para lançar</b>Material atendido por ${res.nfInvolved.length} NF(s). Revise e clique em Confirmar baixa.</div>`;
+  else b = `<div class="banner ${res.already ? 'info' : 'bad'}"><b>${res.already ? 'Pacote já lançado' : 'Baixa bloqueada'}</b><ul>${res.blockers.map(x => '<li>' + esc(x) + '</li>').join('')}</ul>
+    ${res.spoolsWithMissing.length ? `<div class="flex" style="margin-top:10px"><button class="btn sm" data-act="verfaltas">Ver faltas por spool (${res.spoolsWithMissing.length})</button><button class="btn sm" data-act="expfaltas">Exportar auditoria (Excel)</button><button class="btn sm warn" data-act="tirarfaltas" title="Tira do pacote os spools cujo material não tem saldo, para auditar depois. Os demais podem ser lançados.">Retirar ${res.spoolsWithMissing.length} spool(s) com falta do pacote</button></div>` : ''}</div>`;
+  const rem = state.draft.removed || [];
+  if (rem.length) b += `<div class="banner warn"><b>${rem.length} spool(s) retirado(s) deste pacote para auditoria</b>Eles ficam registrados no lote e no Excel de apoio (aba "Retirados p/ auditoria"). <button class="btn link" data-act="verretirados">ver lista</button> · <button class="btn link" data-act="devolverretirados">devolver ao pacote</button></div>`;
+  $('pkgBanner').innerHTML = b;
+  $('faltaCnt').textContent = res.spoolsWithMissing.length || ''; $('faltaCnt').style.display = res.spoolsWithMissing.length ? '' : 'none';
+  const val = res.nfInvolved.reduce((a, n) => a + n.valueWithdrawn, 0);
+  $('pkgKpis').innerHTML = [['Spools OK', sp.filter(s => s.status === 'OK').length], ['Linhas de material', res.demandLines.length], ['Códigos', res.codes.length], ['NFs de retorno', res.nfInvolved.length], ['Valor retirado (R$)', money(val)]]
+    .map(k => `<div class="kpi"><span>${k[0]}</span><b>${k[1]}</b></div>`).join('');
+  $('btnCommit').disabled = !res.ok;
+  $('btnExportSim').disabled = !res.demandLines.length;
+  const out = $('pkgOut');
+  if (!res.demandLines.length) { out.innerHTML = '<div class="empty">Sem consumo calculado ainda.</div>'; return; }
+  if (pkgSeg === 'nf') {
+    const byNf = new Map(); res.allocations.forEach(l => { if (!byNf.has(l.nf)) byNf.set(l.nf, []); byNf.get(l.nf).push(l); });
+    const spoolsByLine = new Map(); res.details.forEach(d => { if (!d.lineId) return; if (!spoolsByLine.has(d.lineId)) spoolsByLine.set(d.lineId, new Set()); spoolsByLine.get(d.lineId).add(d.spool); });
+    out.innerHTML = (res.nfInvolved.length ? '' : '<div class="empty">Nenhuma NF alocada.</div>') + res.nfInvolved.map(n => `
+      <div class="nfcard"><div class="nfhead"><span class="nfn">NF ${esc(n.nf)}</span><span class="meta">emissão ${dt(n.date)} · ${n.withdrawnLines} item(ns) · R$ ${money(n.valueWithdrawn)}</span><span class="grow"></span>${n.zeroingNow ? chip(n.zeroingNow + ' item(ns) zeram') : ''} ${chip(n.situation)}</div>
+      <div class="tbl"><table><thead><tr><th class="n">Item</th><th>Código na NF</th><th>Descrição</th><th>Un</th><th class="n">Saldo antes</th><th class="n">Retirado</th><th class="n">Saldo restante</th><th>Sinalização</th><th class="n">Spools</th></tr></thead><tbody>
+      ${byNf.get(n.nf).map(l => `<tr class="${l.itemStatus === 'ZERA NESTE PACOTE' ? 'hl' : ''}"><td class="n">${l.item}</td><td class="code">${esc(l.codeNF)}</td><td>${esc(l.desc)}</td><td>${esc(l.unit)}</td><td class="n">${q(l.before)}</td><td class="n"><b>${q(l.withdrawn)}</b></td><td class="n">${q(l.after)}</td><td>${l.itemStatus === 'ZERA NESTE PACOTE' ? chip('ZERA NESTE PACOTE') : ''}</td><td class="n" title="${esc([...(spoolsByLine.get(l.lineId) || [])].join('\n'))}">${(spoolsByLine.get(l.lineId) || new Set()).size}</td></tr>`).join('')}
+      </tbody></table></div></div>`).join('');
+  } else if (pkgSeg === 'code') {
+    out.innerHTML = `<div class="tbl"><table><thead><tr><th>Código</th><th>Descrição</th><th>Un</th><th class="n">Demanda</th><th class="n">Disponível</th><th class="n">Retirado</th><th class="n">Falta</th><th>Status</th><th>NFs</th></tr></thead><tbody>
+    ${res.codes.slice().sort((a, b) => (a.status === 'OK') - (b.status === 'OK') || a.code.localeCompare(b.code)).map(c => `<tr><td class="code">${esc(c.code)}</td><td>${esc(c.desc)}</td><td>${esc(c.unitNF || c.unitBase)}${c.unitStatus === 'CONVERTIDO' ? ` <span class="small muted">(×${c.factor} de ${esc(c.unitBase)})</span>` : ''}</td><td class="n">${q(c.unitStatus === 'OK' || c.unitStatus === 'CONVERTIDO' || c.unitStatus === 'SEM NF' ? c.demandNF : c.demandBase)}</td><td class="n">${q(c.available)}</td><td class="n">${q(c.allocated)}</td><td class="n">${c.shortage > 1e-6 ? '<b>' + q(c.shortage) + '</b>' : ''}</td><td>${chip(c.status)}${c.status === 'UNIDADE DIVERGENTE' ? `<div class="small muted">base ${esc(c.unitBase)} × NF ${esc(c.unitNF)}</div>` : ''}</td><td class="small">${esc(c.nfs.join(', '))}</td></tr>`).join('')}
+    </tbody></table></div>`;
+  } else if (pkgSeg === 'falta') {
+    out.innerHTML = faltaHtml(res);
+  } else {
+    out.innerHTML = `<div class="tbl"><table><thead><tr><th>Spool</th><th>Código</th><th>Descrição</th><th>Un</th><th class="n">Qtd</th><th>NF</th><th class="n">Item NF</th></tr></thead><tbody>
+    ${res.details.map(d => `<tr class="${d.missing ? 'hl' : ''}"><td class="code">${esc(d.spool)}</td><td class="code">${esc(d.code)}</td><td>${esc(d.desc)}</td><td>${esc(d.unit)}</td><td class="n">${q(d.qty)}</td><td>${d.missing ? chip('SEM SALDO') : esc(d.nf)}</td><td class="n">${esc(d.item)}</td></tr>`).join('')}
+    </tbody></table></div>`;
+  }
+}
+function diag(c) {
+  if (c.status === 'SEM NF') return 'Nenhuma NF ativa traz este código. Conferir o código na base de materiais (pode ser outro código/revestimento) ou NF ainda não cadastrada.';
+  if (c.status === 'UNIDADE DIVERGENTE') return `Base de spools em ${c.unitBase}, NF em ${c.unitNF}. Informe o fator em Configurações ou corrija a base.`;
+  return `As NFs ativas têm ${q(c.available)} ${c.unitNF || c.unitBase} em saldo; o pacote precisa de ${q(c.demandNF)}. Conferir quantidade na base de materiais ou NF ainda não cadastrada.`;
+}
+function faltaHtml(res) {
+  const bad = res.codes.filter(c => c.status !== 'OK');
+  if (!bad.length) return '<div class="empty">Nenhuma falta: todo o material do pacote tem saldo nas NFs.</div>';
+  const miss = res.shortSpools.filter(x => x.missing > 1e-6).sort((a, b) => a.spool.localeCompare(b.spool) || a.code.localeCompare(b.code));
+  return `<p class="sub">O material abaixo não tem saldo nas NFs ativas. Nada é debitado enquanto houver falta. Audite: pode ser erro na base de materiais, código diferente do que veio na NF, ou NF ainda não cadastrada.</p>
+  <h3>Por código (${bad.length})</h3>
+  <div class="tbl" style="max-height:300px"><table><thead><tr><th>Código</th><th>Descrição</th><th>Situação</th><th class="n">Necessário</th><th class="n">Saldo nas NFs</th><th class="n">Falta</th><th class="n">Spools que usam</th><th>Diagnóstico</th></tr></thead><tbody>
+  ${bad.map(c => `<tr><td class="code">${esc(c.code)}</td><td class="small">${esc(c.desc)}</td><td>${chip(c.status)}</td><td class="n">${q(c.status === 'UNIDADE DIVERGENTE' ? c.demandBase : c.demandNF)}</td><td class="n">${q(c.available)}</td><td class="n"><b>${q(c.shortage)}</b></td><td class="n">${c.spools.length}</td><td class="small">${esc(diag(c))}</td></tr>`).join('')}
+  </tbody></table></div>
+  <h3>Por spool: material sem saldo (${res.spoolsWithMissing.length} spools)</h3>
+  <p class="small muted">Quando o código tem saldo parcial, o saldo existente é atribuído aos spools na ordem da base de materiais; os spools listados aqui são os que ficaram sem cobertura. Os outros spools que usam o mesmo código aparecem no Excel de auditoria.</p>
+  <div class="tbl"><table><thead><tr><th>Spool</th><th>Código</th><th>Descrição</th><th>Un</th><th class="n">Necessário</th><th class="n">Atendido</th><th class="n">Sem saldo</th><th>Situação do código</th></tr></thead><tbody>
+  ${miss.map(x => `<tr><td class="code">${esc(x.spool)}</td><td class="code">${esc(x.code)}</td><td class="small">${esc(x.desc)}</td><td>${esc(x.unit)}</td><td class="n">${q(x.need)}</td><td class="n">${q(x.covered)}</td><td class="n"><b>${q(x.missing)}</b></td><td>${chip(x.status)}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+$('pkgBanner').onclick = async e => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const res = computeDraft();
+  if (b.dataset.act === 'verfaltas') { pkgSeg = 'falta'; [...$('pkgSeg').children].forEach(x => x.classList.toggle('on', x.dataset.s === 'falta')); renderPacote(res); $('pkgOut').scrollIntoView({ behavior: 'smooth' }); }
+  if (b.dataset.act === 'expfaltas') await exportReport({ ...reportFromResult(res, 'AUDITORIA DE FALTAS (não lançado)'), onlyAudit: true });
+  if (b.dataset.act === 'tirarfaltas') {
+    const set = new Set(res.spoolsWithMissing.map(s => s.toUpperCase()));
+    if (!confirm(`Retirar ${set.size} spool(s) com falta do pacote? Eles ficam registrados para auditoria e os demais podem ser lançados.`)) return;
+    const byS = new Map(); res.shortSpools.filter(x => x.missing > 1e-6).forEach(x => { if (!byS.has(x.spool)) byS.set(x.spool, []); byS.get(x.spool).push({ code: x.code, desc: x.desc, unit: x.unit, need: x.need, missing: x.missing, status: x.status }); });
+    state.draft.removed = (state.draft.removed || []).concat([...byS.entries()].map(([spool, items]) => ({ spool, items, at: new Date().toISOString() })));
+    state.draft.spools = state.draft.spools.filter(s => !set.has(String(s).trim().toUpperCase()));
+    save(); render(); toast(set.size + ' spool(s) retirados do pacote para auditoria.');
+  }
+  if (b.dataset.act === 'verretirados') { const r = state.draft.removed || []; modal('Spools retirados para auditoria', `<div class="tbl"><table><thead><tr><th>Spool</th><th>Código</th><th>Descrição</th><th class="n">Sem saldo</th><th>Situação</th></tr></thead><tbody>${r.flatMap(x => x.items.map(i => `<tr><td class="code">${esc(x.spool)}</td><td class="code">${esc(i.code)}</td><td class="small">${esc(i.desc)}</td><td class="n">${q(i.missing)} ${esc(i.unit)}</td><td>${chip(i.status)}</td></tr>`)).join('')}</tbody></table></div>`); }
+  if (b.dataset.act === 'devolverretirados') { const r = state.draft.removed || []; state.draft.spools = state.draft.spools.concat(r.map(x => x.spool)); state.draft.removed = []; save(); render(); toast(r.length + ' spool(s) devolvidos ao pacote.'); }
+};
+$('btnExportSim').onclick = async () => { const res = computeDraft(); await exportReport(reportFromResult(res, 'SIMULAÇÃO (não lançado)')); };
+$('btnCommit').onclick = async () => {
+  if (remote && !(await Sync.refresh(true))) return toast('Não foi possível conferir a versão mais nova no GitHub. Tente de novo.', true);
+  const res = computeDraft(); if (!res.ok) return toast('Baixa bloqueada. Veja os avisos.', true);
+  const tot = res.nfInvolved.reduce((a, n) => a + n.valueWithdrawn, 0);
+  modal('Confirmar baixa do pacote ' + res.pkgId, `<p>Serão debitados <b>${res.allocations.length}</b> itens de <b>${res.nfInvolved.length}</b> NF(s) para <b>${res.spools.filter(s => s.status === 'OK').length}</b> spools (R$ ${money(tot)}).</p>
+    <div class="tbl" style="max-height:260px"><table><thead><tr><th>NF</th><th class="n">Itens</th><th class="n">Zeram</th><th>Situação após</th></tr></thead><tbody>${res.nfInvolved.map(n => `<tr><td>${esc(n.nf)}</td><td class="n">${n.withdrawnLines}</td><td class="n">${n.zeroingNow}</td><td>${chip(n.situation)}</td></tr>`).join('')}</tbody></table></div>
+    <p><label><input type="checkbox" id="cExport" checked style="width:auto"> Baixar o Excel de apoio para o Antônio</label></p>
+    <div class="flex"><span class="sp"></span><button class="btn" onclick="document.getElementById('mClose').click()">Cancelar</button><button class="btn pri" id="cGo">Confirmar baixa</button></div>`);
+  $('cGo').onclick = async () => {
+    const exp = $('cExport').checked; const date = state.draft.date || todayISO();
+    const fresh = computeDraft(); if (!fresh.ok) { closeModal(); return toast('A situação mudou; revise o pacote.', true); }
+    const movs = Engine.movementsFromResult(fresh, date);
+    state.movements.push(...movs);
+    state.packages.push({ id: fresh.pkgId, kind: 'PACOTE', date, createdAt: new Date().toISOString(), status: 'LANÇADO', spools: fresh.spools.filter(s => s.status === 'OK').map(s => s.spool), nfs: fresh.nfInvolved.map(n => n.nf), lines: fresh.allocations.length, snapshot: snapshotOf(fresh), removedForAudit: state.draft.removed || [] });
+    const rep = reportFromResult(fresh, 'LANÇADO em ' + new Date().toLocaleString('pt-BR'));
+    const prevDraft = state.draft;
+    state.draft = { id: nextId(fresh.pkgId), date: todayISO(), spools: [] };
+    closeModal();
+    const ok = await save('Baixa do pacote ' + fresh.pkgId);
+    if (!ok) { state.draft = prevDraft; save(); render(); return; }   // não gravou: o pacote volta para a tela
+    render();
+    toast(`Baixa do pacote ${fresh.pkgId} confirmada${remote ? ' e gravada no GitHub' : '. Faça o backup'}.`);
+    if (exp) await exportReport(rep);
+  };
+};
+function nextId(id) { const m = String(id).match(/^(.*?)(\d+)$/); return m ? m[1] + String(+m[2] + 1).padStart(m[2].length, '0') : ''; }
+function snapshotOf(res) {
+  return {
+    nfInvolved: res.nfInvolved,
+    allocations: res.allocations.map(l => ({ nf: l.nf, date: l.date, key: l.key, item: l.item, codeNF: l.codeNF, code: l.code, desc: l.desc, unit: l.unit, vu: l.vu, before: l.before, withdrawn: l.withdrawn, after: l.after, itemStatus: l.itemStatus })),
+    codes: res.codes.map(c => ({ code: c.code, desc: c.desc, unitNF: c.unitNF, unitBase: c.unitBase, demandNF: c.demandNF, allocated: c.allocated, shortage: c.shortage, after: c.after, status: c.status, nfs: c.nfs }))
+  };
+}
+
+/* ---------------- SALDO ---------------- */
+$('saldoSearch').oninput = () => renderSaldo(); $('saldoFilter').onchange = () => renderSaldo();
+$('nfBalRows').onclick = e => { const tr = e.target.closest('tr[data-nf]'); if (!tr) return; $('saldoSearch').value = tr.dataset.nf; renderSaldo(); $('saldoRows').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); };
+$('saldoRows').onclick = e => { const b = e.target.closest('[data-avulso]'); if (b) avulso(b.dataset.avulso); };
+function renderSaldo() {
+  const cur = computeCurrent(); const act = cur.lines.filter(l => l.nfStatus === 'ATIVA');
+  const nfs = cur.nfSummary.filter(n => n.status === 'ATIVA');
+  $('saldoKpis').innerHTML = [['NFs ativas', nfs.length], ['Linhas de NF', act.length], ['Linhas zeradas', act.filter(l => l.after <= 1e-6).length], ['NFs com devolução total', nfs.filter(n => /DEVOLUÇÃO TOTAL/.test(n.situation)).length], ['Valor em saldo (R$)', money(act.reduce((a, l) => a + Math.max(0, l.after) * l.vu, 0))]]
+    .map(k => `<div class="kpi"><span>${k[0]}</span><b>${k[1]}</b></div>`).join('');
+  $('nfBalRows').innerHTML = nfs.map(n => { const ls = act.filter(l => l.nf === n.nf); return `<tr data-nf="${esc(n.nf)}" style="cursor:pointer"><td><b>${esc(n.nf)}</b></td><td>${dt(n.date)}</td><td class="n">${n.items}</td><td class="n">${n.zeroed}</td><td class="n">${n.items - n.zeroed}</td><td class="n">${money(ls.reduce((a, l) => a + l.qty * l.vu, 0))}</td><td class="n">${money(ls.reduce((a, l) => a + Math.max(0, l.after) * l.vu, 0))}</td><td>${chip(n.situation.replace(' (NESTE PACOTE)', ''))}</td></tr>`; }).join('');
+  const s = $('saldoSearch').value.trim().toLowerCase(), f = $('saldoFilter').value;
+  let rows = act.filter(l => !s || [l.nf, l.codeNF, l.code, l.desc].join(' ').toLowerCase().includes(s));
+  if (f === 'ABERTO') rows = rows.filter(l => l.after > 1e-6);
+  if (f === 'ZERADO') rows = rows.filter(l => l.after <= 1e-6);
+  if (f === 'SEMPAR') rows = rows.filter(l => !l.inBase);
+  if (f === 'MOV') rows = rows.filter(l => l.returned > 0);
+  $('saldoRows').innerHTML = rows.map(l => `<tr class="${l.after <= 1e-6 ? 'dim' : ''}"><td>${esc(l.nf)}</td><td>${dt(l.date)}</td><td class="n">${l.item}</td><td class="code">${esc(l.code)}${l.inBase ? '' : ' <span class="chip mute" title="Código sem par na base de spools">sem par</span>'}</td><td>${esc(l.desc)}</td><td>${esc(l.unit)}</td><td class="n">${q(l.qty)}</td><td class="n">${q(l.returned)}</td><td class="n"><b>${q(l.after)}</b></td><td>${chip(l.after <= 1e-6 ? 'ZERADO' : l.itemStatus)}</td><td>${l.after > 1e-6 ? `<button class="btn sm" data-avulso="${esc(l.lineId)}" title="Baixa manual deste item (ex.: sobra, suporte, material não usado em spool)">Baixa avulsa</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="11"><div class="empty">Nenhum item.</div></td></tr>';
+  $('saldoNote').textContent = rows.length + ' linha(s). Linhas "sem par" (suportes, tintas, consumíveis, chapas…) nunca são baixadas por spool: use a baixa avulsa quando forem devolvidas.';
+}
+$('btnExportSaldo').onclick = async () => { const cur = computeCurrent(); await exportReport({ id: 'SALDO-' + todayISO(), date: todayISO(), status: 'Posição atual', onlySaldo: true, saldoLines: cur.lines, nfSummary: cur.nfSummary, saldoLabel: 'Posição em ' + dt(todayISO()) }); };
+function avulso(lineId) {
+  const cur = computeCurrent(); const l = cur.lines.find(x => x.lineId === lineId); if (!l) return;
+  const id = 'AVULSO-' + todayISO().replace(/-/g, '') + '-' + (state.packages.filter(p => p.kind === 'AVULSO').length + 1);
+  modal('Baixa avulsa · NF ' + l.nf + ' item ' + l.item, `<p class="sub">${esc(l.codeNF)} · ${esc(l.desc)}<br>Saldo atual: <b>${q(l.after)} ${esc(l.unit)}</b></p>
+  <div class="row"><div class="field"><label>Quantidade</label><input id="aQty" value="${q(l.after).replace(/\./g, '')}"></div><div class="field"><label>Identificação</label><input id="aId" value="${esc(id)}"></div><div class="field"><label>Data</label><input id="aDate" type="date" value="${todayISO()}"></div></div>
+  <div class="field" style="margin-top:8px"><label>Motivo (obrigatório)</label><input id="aObs" placeholder="Ex.: sobra devolvida / suporte enviado na NF de retorno X"></div>
+  <div class="flex" style="margin-top:12px"><span class="sp"></span><button class="btn pri" id="aGo">Lançar baixa avulsa</button></div>`);
+  $('aGo').onclick = async () => {
+    const qty = Engine.r6(parseNum($('aQty').value)), pid = $('aId').value.trim(), obs = $('aObs').value.trim(), date = $('aDate').value || todayISO();
+    if (!(qty > 0)) return toast('Quantidade inválida.', true);
+    if (qty > l.after + 1e-6) return toast('Quantidade maior que o saldo da linha. Zero é o limite.', true);
+    if (!pid || state.movements.some(m => m.pkg === pid && m.status === 'LANÇADO')) return toast('Identificação vazia ou já usada.', true);
+    if (!obs) return toast('Informe o motivo.', true);
+    state.movements.push({ id: pid + '#1', pkg: pid, date, spool: '', nf: l.nf, item: l.item, lineId: l.lineId, code: l.code, codeNF: l.codeNF, desc: l.desc, unit: l.unit, qty, vu: l.vu, status: 'LANÇADO', kind: 'AVULSO', obs, createdAt: new Date().toISOString() });
+    const after = Engine.r6(l.after - qty);
+    const snap = { nfInvolved: [], allocations: [{ nf: l.nf, date: l.date, key: l.key, item: l.item, codeNF: l.codeNF, code: l.code, desc: l.desc, unit: l.unit, vu: l.vu, before: l.after, withdrawn: qty, after, itemStatus: after <= 1e-6 ? 'ZERA NESTE PACOTE' : 'ABERTO' }], codes: [] };
+    const cur2 = computeCurrent(); const ns = cur2.nfSummary.find(n => n.nf === l.nf);
+    snap.nfInvolved = [{ ...ns, withdrawnLines: 1, zeroingNow: after <= 1e-6 ? 1 : 0, valueWithdrawn: Math.round(qty * l.vu * 100) / 100, situation: ns.situation }];
+    state.packages.push({ id: pid, kind: 'AVULSO', date, createdAt: new Date().toISOString(), status: 'LANÇADO', spools: [], nfs: [l.nf], lines: 1, obs, snapshot: snap });
+    closeModal(); render(); save('Baixa avulsa ' + pid + ' (NF ' + l.nf + ')').then(ok => ok && toast('Baixa avulsa lançada.'));
+  };
+}
+
+/* ---------------- NOTAS ---------------- */
+const drop = $('drop');
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => handleFiles([...e.dataTransfer.files]));
+$('nfFile').onchange = e => { handleFiles([...e.target.files]); e.target.value = ''; };
+async function handleFiles(files) {
+  for (const f of files) {
+    try {
+      let parsed;
+      if (/\.xml$/i.test(f.name)) parsed = NFParse.parseXML(await f.text());
+      else if (/\.pdf$/i.test(f.name)) parsed = await parsePdf(f);
+      else { toast('Formato não suportado: ' + f.name, true); continue; }
+      parsed.file = f.name;
+      await previewNf(parsed);
+    } catch (err) { console.error(err); toast('Erro ao ler ' + f.name + ': ' + err.message, true); }
+  }
+}
+async function parsePdf(file) {
+  await loadPdfJs();
+  const doc = await window.pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  let lines = [];
+  for (let p = 1; p <= doc.numPages; p++) { const pg = await doc.getPage(p); const tc = await pg.getTextContent(); lines = lines.concat(NFParse.linesFromItems(tc.items.map(i => ({ str: i.str, x: i.transform[4], y: i.transform[5], w: i.width })))); }
+  return NFParse.parseDanfeText(lines);
+}
+function previewNf(p) {
+  return new Promise(resolve => {
+    const nf = p.head.nf; const exists = allNfs().find(n => n.nf === nf); const excl = DATA.excluded.find(e => e.nf === nf);
+    const defStatus = p.head.tpNF === '0' ? 'ENTRADA BRASFELS' : 'ATIVA';
+    const warn = p.warnings.slice();
+    if (exists) warn.unshift(`A NF ${nf} já está cadastrada (${exists.origin || 'importada'}).`);
+    if (excl) warn.unshift(`A NF ${nf} consta como ${excl.status} na planilha de controle: ${excl.reason}`);
+    const pr = prep();
+    const nSemPar = p.items.filter(i => !pr.baseCodes.has(Engine.normalize(i.codeNF, state.config.prefixes))).length;
+    modal(`NF ${nf || '?'} · ${p.source}`, `
+      <div class="kpis"><div class="kpi"><span>Emissão</span><b style="font-size:16px">${dt(p.head.date) || '?'}</b></div><div class="kpi"><span>Itens</span><b>${p.items.length}</b></div><div class="kpi"><span>Soma dos itens (R$)</span><b style="font-size:16px">${money(p.sumItems)}</b></div><div class="kpi"><span>Total da NF (R$)</span><b style="font-size:16px">${p.head.totalProducts != null ? money(p.head.totalProducts) : '?'}</b></div><div class="kpi"><span>Sem par na base</span><b>${nSemPar}</b></div></div>
+      <p class="small muted">${esc(p.head.natOp)} · chave ${esc(p.head.key)} · arquivo ${esc(p.file)}</p>
+      ${p.totalOk ? '<div class="banner ok"><b>Conferência OK</b>A soma dos itens bate com o valor total dos produtos da NF.</div>' : ''}
+      ${warn.length ? `<div class="banner warn"><b>Atenção</b><ul>${warn.map(w => '<li>' + esc(w) + '</li>').join('')}</ul></div>` : ''}
+      <div class="tbl" style="max-height:300px"><table><thead><tr><th class="n">Item</th><th>Código</th><th>Descrição</th><th>Un</th><th class="n">Qtd</th><th class="n">Vl. unit.</th><th>CFOP</th></tr></thead><tbody>${p.items.map(i => `<tr><td class="n">${i.item}</td><td class="code">${esc(i.codeNF)}</td><td>${esc(i.desc)}</td><td>${esc(i.unit)}</td><td class="n">${q(i.qty)}</td><td class="n">${money(i.vu)}</td><td>${esc(i.cfop || '')}</td></tr>`).join('')}</tbody></table></div>
+      <div class="row" style="margin-top:12px"><div class="field" style="max-width:120px"><label>NF</label><input id="pNf" value="${esc(nf)}"></div><div class="field" style="max-width:170px"><label>Emissão</label><input id="pDate" type="date" value="${esc(p.head.date)}"></div>
+      <div class="field" style="max-width:220px"><label>Situação</label><select id="pStatus">${['ATIVA', 'INATIVA', 'ENTRADA BRASFELS', 'RECUSADA'].map(s => `<option ${s === defStatus ? 'selected' : ''}>${s}</option>`).join('')}</select></div></div>
+      <div class="flex" style="margin-top:12px"><button class="btn" id="pCopy" title="Linhas no formato da aba Saldo das NFs da versão Excel">Copiar linhas para o Excel</button><span class="sp"></span><button class="btn" id="pCancel">Cancelar</button><button class="btn pri" id="pGo" ${exists && !exists.importedAt ? 'disabled' : ''}>${exists && exists.importedAt ? 'Substituir NF' : 'Cadastrar NF'}</button></div>`);
+    modalResolve = resolve; const finish = closeModal;
+    $('pCancel').onclick = finish;
+    $('pCopy').onclick = () => {
+      const n = $('pNf').value.trim();
+      const tsv = p.items.map(i => [n, i.item, i.codeNF, i.desc, i.unit, String(i.qty).replace('.', ',')].join('\t')).join('\r\n');
+      copyText(tsv); toast('Itens copiados: cole na aba Saldo das NFs (coluna A, primeira linha livre). Na aba Notas fiscais cadastre: ' + n + ' · ' + dt($('pDate').value) + ' · ATIVA');
+    };
+    $('pGo').onclick = () => {
+      const n = $('pNf').value.trim(); const d = $('pDate').value;
+      if (!/^\d+$/.test(n) || !d) return toast('Informe NF e data de emissão.', true);
+      if (DATA.nfs.some(x => x.nf === n)) return toast('Essa NF já está na base inicial.', true);
+      const st = $('pStatus').value;
+      if (st === 'ATIVA' && p.head.tpNF === '0' && !confirm('Esta é uma NF de ENTRADA (não é material recebido). Cadastrar como ATIVA mesmo assim?')) return;
+      const old = state.addedNfs.findIndex(x => x.nf === n);
+      if (old >= 0) { if (state.movements.some(m => m.nf === n && m.status === 'LANÇADO')) return toast('Essa NF já tem baixas lançadas. Estorne antes de substituir.', true); state.addedNfs.splice(old, 1); }
+      state.addedNfs.push({ nf: n, date: d, key: p.head.key, status: st, parser: p.source, file: p.file, total: p.sumItems, items: p.items.map(i => ({ item: i.item, codeNF: i.codeNF, desc: i.desc, unit: i.unit, qty: i.qty, vu: i.vu })), importedAt: new Date().toISOString(), origin: 'Importada (' + p.source + ')' });
+      delete state.nfStatus[n];
+      finish(); render(); save('NF ' + n + ' cadastrada (' + st + ')').then(ok => ok && toast(`NF ${n} cadastrada (${st}).`));
+    };
+  });
+}
+$('btnManual').onclick = () => {
+  const lines = $('mItems').value.split(/\r?\n/).map(l => l.split(l.includes('\t') ? '\t' : ';').map(x => x.trim())).filter(r => r.some(Boolean));
+  const items = []; const bad = [];
+  lines.forEach((r, i) => { const qty = parseNum(r[3]); if (!r[0] || !(qty > 0)) { if (!/c[oó]d/i.test(r[0] || '')) bad.push(i + 1); return; } items.push({ item: items.length + 1, codeNF: r[0], desc: r[1] || '', unit: (r[2] || '').toUpperCase(), qty, vu: parseNum(r[4]) || 0, total: (parseNum(r[4]) || 0) * qty }); });
+  if (!items.length) return toast('Nenhum item válido. Use: Código | Descrição | Un | Qtd | Valor unit.', true);
+  const p = { head: { nf: $('mNf').value.trim(), date: $('mDate').value, key: $('mKey').value.trim(), natOp: 'cadastro manual', tpNF: '1', totalProducts: null }, items, source: 'MANUAL', warnings: bad.length ? ['Linhas ignoradas: ' + bad.join(', ')] : [], file: '—', sumItems: Math.round(items.reduce((a, i) => a + i.total, 0) * 100) / 100, totalOk: false };
+  previewNf(p);
+};
+$('nfRows').onchange = e => { const s = e.target.closest('select[data-nfst]'); if (!s) return; const nf = s.dataset.nfst;
+  if (s.value !== 'ATIVA' && state.movements.some(m => m.nf === nf && m.status === 'LANÇADO')) { toast('A NF ' + nf + ' tem baixas lançadas. Estorne ou exclua esses lotes antes de tirá-la do saldo.', true); renderNotas(); return; } const added = state.addedNfs.find(n => n.nf === nf); if (added) added.status = s.value; else if (s.value === 'ATIVA') delete state.nfStatus[nf]; else state.nfStatus[nf] = s.value; save(); render(); toast('Situação da NF ' + nf + ' alterada para ' + s.value + '.'); };
+$('nfRows').onclick = e => {
+  const b = e.target.closest('[data-nfrm]'); if (b) { const nf = b.dataset.nfrm; if (state.movements.some(m => m.nf === nf && m.status === 'LANÇADO')) return toast('A NF tem baixas lançadas. Estorne antes de remover.', true); if (confirm('Remover a NF ' + nf + ' do sistema?')) { state.addedNfs = state.addedNfs.filter(n => n.nf !== nf); save(); render(); } return; }
+  const v = e.target.closest('[data-nfview]'); if (v) { const n = allNfs().find(x => x.nf === v.dataset.nfview); modal('NF ' + n.nf + ' · itens', `<p class="small muted">${esc(n.origin || '')} · ${esc(n.file || '')}</p><div class="tbl"><table><thead><tr><th class="n">Item</th><th>Código</th><th>Descrição</th><th>Un</th><th class="n">Qtd</th><th class="n">Vl. unit.</th></tr></thead><tbody>${n.items.map(i => `<tr><td class="n">${i.item}</td><td class="code">${esc(i.codeNF)}</td><td>${esc(i.desc)}</td><td>${esc(i.unit)}</td><td class="n">${q(i.qty)}</td><td class="n">${money(i.vu)}</td></tr>`).join('')}</tbody></table></div>`); }
+};
+function renderNotas() {
+  const nfs = allNfs().slice().sort((a, b) => (a.date || '').localeCompare(b.date || '') || +a.nf - +b.nf);
+  $('nfRows').innerHTML = nfs.map(n => `<tr><td><button class="btn link" data-nfview="${esc(n.nf)}"><b>${esc(n.nf)}</b></button></td><td>${dt(n.date)}</td><td class="small">${esc(n.origin || '')}</td><td class="n">${n.items.length}</td><td class="n">${money(n.total ?? n.items.reduce((a, i) => a + i.qty * i.vu, 0))}</td>
+    <td><select data-nfst="${esc(n.nf)}" style="width:auto;padding:4px 6px">${['ATIVA', 'INATIVA', 'ENTRADA BRASFELS', 'RECUSADA'].map(s => `<option ${s === n.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
+    <td>${n.importedAt ? `<button class="x" data-nfrm="${esc(n.nf)}" title="Remover NF importada">×</button>` : ''}</td></tr>`).join('');
+  $('exclRows').innerHTML = DATA.excluded.slice().sort((a, b) => +a.nf - +b.nf).map(e => `<tr><td>${esc(e.nf)}</td><td>${dt(e.date)}</td><td>${chip(/RECUSADA/.test(e.status) ? 'RECUSADA' : 'ENTRADA BRASFELS')}</td><td class="small">${esc(e.reason)}</td></tr>`).join('');
+  const have = new Set(allNfs().map(n => n.nf));
+  const aw = DATA.pendingNF.filter(p => !have.has(p.nf));
+  $('awaitList').innerHTML = aw.length ? aw.map(p => `<div class="flex" style="padding:6px 0;border-bottom:1px solid var(--line)"><b>NF ${esc(p.nf)}</b>${chip('AGUARDANDO')}<span class="small muted">${esc(p.reason)}</span></div>`).join('') : '<div class="muted small">Nenhuma NF aguardando.</div>';
+}
+
+/* ---------------- HISTÓRICO ---------------- */
+$('movSearch').oninput = () => renderHist();
+$('pkgRows').onclick = async e => {
+  const x = e.target.closest('[data-xls]'); if (x) { const p = state.packages.find(p => p.id === x.dataset.xls); await exportReport(reportFromPackage(p)); return; }
+  const d = e.target.closest('[data-del]'); if (d) return deleteLot(state.packages.find(p => p.id === d.dataset.del));
+  const r = e.target.closest('[data-rev]'); if (!r) return;
+  const p = state.packages.find(p => p.id === r.dataset.rev);
+  modal('Estornar ' + p.id, `<p>O saldo de <b>${p.lines}</b> item(ns) volta para as NFs ${esc(p.nfs.join(', '))}. Os spools ficam livres para novo pacote. O registro continua no histórico como ESTORNADO.</p>
+    <div class="field"><label>Motivo do estorno</label><input id="rObs" placeholder="Ex.: pacote lançado com spool errado"></div>
+    <div class="flex" style="margin-top:12px"><span class="sp"></span><button class="btn warn" id="rGo">Estornar pacote</button></div>`);
+  $('rGo').onclick = () => {
+    const obs = $('rObs').value.trim(); if (!obs) return toast('Informe o motivo.', true);
+    const now = new Date().toISOString();
+    state.movements.forEach(m => { if (m.pkg === p.id && m.status === 'LANÇADO') { m.status = 'ESTORNADO'; m.reversedAt = now; m.reverseObs = obs; } });
+    p.status = 'ESTORNADO'; p.reversedAt = now; p.reverseObs = obs;
+    closeModal(); render(); save('Estorno do pacote ' + p.id).then(ok => ok && toast('Pacote ' + p.id + ' estornado.'));
+  };
+};
+function deleteLot(p) {
+  const mv = state.movements.filter(m => m.pkg === p.id);
+  const later = state.packages.filter(x => x.status === 'LANÇADO' && x.id !== p.id && x.createdAt > p.createdAt).length;
+  modal('Excluir lote ' + p.id, `<p>O lote e seus <b>${mv.length}</b> movimento(s) serão apagados. ${p.status === 'LANÇADO' ? `O saldo de <b>${p.lines}</b> item(ns) volta para as NFs ${esc(p.nfs.join(', '))} e os spools ficam livres para novo pacote.` : 'O lote já estava estornado; o saldo não muda.'}</p>
+    ${later && p.status === 'LANÇADO' ? `<div class="banner warn"><b>Há ${later} lote(s) lançado(s) depois deste.</b>Eles continuam válidos (consumiram saldo que existia). O saldo devolvido por esta exclusão volta para as linhas de NF que este lote usou; o relatório de saldos recalcula a sequência sem ele.</div>` : ''}
+    <div class="field"><label>Motivo da exclusão</label><input id="dObs" placeholder="Ex.: lote lançado em duplicidade"></div>
+    <div class="field" style="margin-top:8px"><label>Para confirmar, digite o identificador do lote: <b>${esc(p.id)}</b></label><input id="dConf"></div>
+    <div class="flex" style="margin-top:12px"><span class="sp"></span><button class="btn warn" id="dGo">Excluir lote</button></div>`);
+  $('dGo').onclick = () => {
+    const obs = $('dObs').value.trim(); if (!obs) return toast('Informe o motivo.', true);
+    if ($('dConf').value.trim() !== p.id) return toast('Identificador não confere.', true);
+    state.deletions.push({ id: p.id, kind: p.kind, date: p.date, createdAt: p.createdAt, status: p.status, deletedAt: new Date().toISOString(), reason: obs, lines: p.lines, nfs: p.nfs, spools: p.spools.length,
+      movements: mv.map(m => ({ spool: m.spool, nf: m.nf, item: m.item, code: m.code, qty: m.qty, status: m.status })) });
+    state.movements = state.movements.filter(m => m.pkg !== p.id);
+    state.packages = state.packages.filter(x => x !== p);
+    closeModal(); render(); save('Exclusão do lote ' + p.id).then(ok => ok && toast('Lote ' + p.id + ' excluído. Saldo devolvido às NFs.'));
+  };
+}
+function renderHist() {
+  const pk = state.packages.slice().reverse();
+  $('pkgRows').innerHTML = pk.length ? pk.map(p => `<tr class="${p.status === 'ESTORNADO' ? 'dim' : ''}"><td><b>${esc(p.id)}</b>${p.obs ? `<div class="small muted">${esc(p.obs)}</div>` : ''}</td><td>${esc(p.kind)}</td><td>${dt(p.date)}</td><td class="small">${new Date(p.createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</td><td class="n">${p.spools.length}</td><td class="small">${esc(p.nfs.join(', '))}</td><td class="n">${p.lines}</td><td>${chip(p.status)}${p.reverseObs ? `<div class="small muted">${esc(p.reverseObs)}</div>` : ''}</td><td class="right"><button class="btn sm" data-xls="${esc(p.id)}">Excel</button> ${p.status === 'LANÇADO' ? `<button class="btn sm" data-rev="${esc(p.id)}">Estornar</button>` : ''} <button class="btn sm warn" data-del="${esc(p.id)}">Excluir</button></td></tr>`).join('') : '<tr><td colspan="9"><div class="empty">Nenhum pacote lançado.</div></td></tr>';
+  $('delCard').style.display = state.deletions.length ? '' : 'none';
+  $('delRows').innerHTML = state.deletions.slice().reverse().map(d => `<tr><td><b>${esc(d.id)}</b></td><td>${esc(d.kind)}</td><td>${dt(d.date)}</td><td class="small">${new Date(d.deletedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</td><td class="n">${d.lines}</td><td class="small">${esc(d.nfs.join(', '))}</td><td class="small">${esc(d.reason)}</td></tr>`).join('');
+  const s = $('movSearch').value.trim().toLowerCase();
+  const mv = state.movements.filter(m => !s || [m.pkg, m.spool, m.nf, m.code].join(' ').toLowerCase().includes(s)).slice(-1500).reverse();
+  $('movRows').innerHTML = mv.length ? mv.map(m => `<tr class="${m.status !== 'LANÇADO' ? 'dim' : ''}"><td>${esc(m.pkg)}</td><td>${dt(m.date)}</td><td class="code">${esc(m.spool || '(avulsa)')}</td><td>${esc(m.nf)}</td><td class="n">${m.item}</td><td class="code">${esc(m.code)}</td><td>${esc(m.unit)}</td><td class="n">${q(m.qty)}</td><td>${chip(m.status)}</td></tr>`).join('') : '<tr><td colspan="9"><div class="empty">Sem movimentos.</div></td></tr>';
+}
+function nfSituation(ls) {
+  const n = ls.length, z = ls.filter(l => l.after <= 1e-6).length;
+  return z === n ? 'DEVOLUÇÃO TOTAL' : z ? `PARCIAL (${z} de ${n} itens zerados)` : 'ABERTA';
+}
+/* visão de um lote reconstruída pela sequência real de lançamentos (fiel ao histórico atual) */
+function lotView(p) {
+  const rp = Engine.replay(ctx(), state.packages, prep());
+  const step = rp.steps.find(x => x.lot.id === p.id);
+  const lines = rp.lines.map(l => {
+    const before = step ? Engine.r6(l.qty - (step.returnedBefore.get(l.lineId) || 0)) : null;
+    const withdrawn = step ? (step.withdrawn.get(l.lineId) || 0) : 0;
+    const after = step ? Engine.r6(before - withdrawn) : null;
+    return { ...l, returned: step ? (step.returnedBefore.get(l.lineId) || 0) : 0, before, withdrawn, after, itemStatus: !step ? '' : after <= 1e-6 ? (withdrawn > 0 ? 'ZERA NESTE PACOTE' : 'ZERADO') : 'ABERTO' };
+  });
+  const byNf = new Map(); lines.forEach(l => { if (!byNf.has(l.nf)) byNf.set(l.nf, []); byNf.get(l.nf).push(l); });
+  const nfSummary = [...byNf.entries()].map(([nf, ls]) => { const w = ls.filter(l => l.withdrawn > 0); return { nf, date: ls[0].date, key: ls[0].key, status: 'ATIVA', items: ls.length, zeroed: ls.filter(l => l.after <= 1e-6).length, withdrawnLines: w.length, zeroingNow: ls.filter(l => l.itemStatus === 'ZERA NESTE PACOTE').length, valueWithdrawn: Math.round(w.reduce((a, l) => a + l.withdrawn * l.vu, 0) * 100) / 100, situation: step ? (nfSituation(ls) === 'DEVOLUÇÃO TOTAL' && w.length ? 'DEVOLUÇÃO TOTAL (NESTE PACOTE)' : nfSituation(ls)) : '' }; });
+  return { step, lines, nfSummary };
+}
+$('btnExportHist').onclick = async () => {
+  const E = await loadExcel(); const wb = new E.Workbook();
+  const rp = Engine.replay(ctx(), state.packages, prep());
+  const steps = rp.steps; const lines = rp.lines;
+  // 1. Lotes
+  const ws = wb.addWorksheet('Lotes', { views: [{ showGridLines: false }] });
+  let r = title(ws, 'Relatório de lotes e saldos', [['Gerado em', new Date().toLocaleString('pt-BR')], ['Lotes lançados', steps.length], ['NFs ativas', new Set(lines.map(l => l.nf)).size]]);
+  const lotRows = steps.map((st, i) => {
+    const p = st.lot; const val = lines.reduce((a, l) => a + (st.withdrawn.get(l.lineId) || 0) * l.vu, 0);
+    const zer = lines.filter(l => (st.withdrawn.get(l.lineId) || 0) > 0 && Engine.r6(l.qty - (st.returnedAfter.get(l.lineId) || 0)) <= 1e-6).length;
+    const byNf = new Map(); lines.forEach(l => { if (!byNf.has(l.nf)) byNf.set(l.nf, []); byNf.get(l.nf).push({ after: Engine.r6(l.qty - (st.returnedAfter.get(l.lineId) || 0)) }); });
+    const tot = [...byNf.entries()].filter(([, ls]) => ls.every(x => x.after <= 1e-6)).map(([nf]) => nf);
+    return [i + 1, p.id, p.kind, dt(p.date), new Date(p.createdAt).toLocaleString('pt-BR'), p.spools.length, p.nfs.join(', '), st.withdrawn.size, Math.round(val * 100) / 100, zer, tot.join(', '), (p.removedForAudit || []).length, p.obs || ''];
+  });
+  r = section(ws, r, 'Lotes lançados (ordem de lançamento)');
+  r = addTable(ws, r, ['#', 'Lote', 'Tipo', 'Data envio', 'Lançado em', 'Spools', 'NFs', 'Linhas de NF', 'Valor retirado (R$)', 'Itens zerados no lote', 'NFs em devolução total após o lote', 'Spools retirados p/ auditoria', 'Obs.'], lotRows, [5, 16, 9, 11, 18, 8, 40, 9, 14, 10, 30, 12, 30], [null, null, null, null, null, null, null, null, M2]) + 1;
+  const est = state.packages.filter(p => p.status !== 'LANÇADO');
+  if (est.length) { r = section(ws, r, 'Lotes estornados (não afetam o saldo)'); r = addTable(ws, r, ['Lote', 'Tipo', 'Data envio', 'Lançado em', 'Estornado em', 'Motivo'], est.map(p => [p.id, p.kind, dt(p.date), new Date(p.createdAt).toLocaleString('pt-BR'), p.reversedAt ? new Date(p.reversedAt).toLocaleString('pt-BR') : '', p.reverseObs || '']), null) + 1; }
+  if (state.deletions.length) { r = section(ws, r, 'Lotes excluídos'); addTable(ws, r, ['Lote', 'Tipo', 'Data envio', 'Lançado em', 'Excluído em', 'Linhas', 'NFs', 'Motivo'], state.deletions.map(d => [d.id, d.kind, dt(d.date), new Date(d.createdAt).toLocaleString('pt-BR'), new Date(d.deletedAt).toLocaleString('pt-BR'), d.lines, d.nfs.join(', '), d.reason]), null); }
+  // 2. Saldo após cada lote (linha de NF)
+  const wsS = wb.addWorksheet('Saldo após cada lote');
+  const hdr = ['NF', 'Emissão', 'Item', 'Código na NF', 'Código', 'Descrição', 'Un', 'Recebido'];
+  steps.forEach((st, i) => hdr.push(`${i + 1}. ${st.lot.id}\nretirado`, `${i + 1}. ${st.lot.id}\nsaldo após`));
+  hdr.push('Saldo atual', 'Situação atual');
+  const rowsS = lines.map(l => { const row = [+l.nf, dt(l.date), l.item, l.codeNF, l.code, l.desc, l.unit, l.qty]; steps.forEach(st => { const w = st.withdrawn.get(l.lineId) || 0; row.push(w || null, Engine.r6(l.qty - (st.returnedAfter.get(l.lineId) || 0))); }); const last = steps.length ? Engine.r6(l.qty - (steps[steps.length - 1].returnedAfter.get(l.lineId) || 0)) : l.qty; row.push(last, last <= 1e-6 ? 'ZERADO' : 'ABERTO'); return row; });
+  const fmts = [null, null, null, null, null, null, null, Q3]; steps.forEach(() => fmts.push(Q3, Q3)); fmts.push(Q3);
+  addTable(wsS, 1, hdr, rowsS, [8, 11, 6, 22, 20, 36, 5, 10].concat(steps.flatMap(() => [11, 11])).concat([10, 10]), fmts);
+  wsS.getRow(1).height = 42;
+  rowsS.forEach((row, j) => { steps.forEach((st, i) => { const c = wsS.getRow(2 + j).getCell(9 + i * 2); if (c.value) { c.fill = FILL('FFFFF0C2'); c.font = { name: 'Arial', size: 10, bold: true }; } const a = wsS.getRow(2 + j).getCell(10 + i * 2); if (a.value != null && a.value <= 1e-6) a.fill = FILL('FFE3F4E1'); }); });
+  wsS.views = [{ state: 'frozen', xSplit: 5, ySplit: 1 }]; wsS.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1 + rowsS.length, column: hdr.length } };
+  // 3. Situação das NFs após cada lote
+  const wsN = wb.addWorksheet('NFs após cada lote');
+  const nfs = [...new Set(lines.map(l => l.nf))];
+  const hN = ['NF', 'Emissão', 'Itens'].concat(steps.map((st, i) => `${i + 1}. ${st.lot.id}`));
+  addTable(wsN, 1, hN, nfs.map(nf => { const ls = lines.filter(l => l.nf === nf); return [+nf, dt(ls[0].date), ls.length].concat(steps.map(st => { const w = ls.some(l => st.withdrawn.has(l.lineId)); const sit = nfSituation(ls.map(l => ({ after: Engine.r6(l.qty - (st.returnedAfter.get(l.lineId) || 0)) }))); return (w ? '● ' : '') + sit; })); }), [8, 11, 7].concat(steps.map(() => 30)));
+  wsN.getCell('A' + (nfs.length + 3)).value = '● = NF movimentada naquele lote.'; wsN.views = [{ state: 'frozen', xSplit: 1, ySplit: 1 }];
+  // 4. Movimentos
+  const wm = wb.addWorksheet('Movimentos'); addTable(wm, 1, ['Lote', 'Data envio', 'Spool', 'NF', 'Item NF', 'Código na NF', 'Código', 'Descrição', 'Un', 'Qtd', 'Status', 'Estornado em'], state.movements.map(m => [m.pkg, dt(m.date), m.spool, +m.nf, m.item, m.codeNF, m.code, m.desc, m.unit, m.qty, m.status, m.reversedAt ? new Date(m.reversedAt).toLocaleString('pt-BR') : '']), [16, 11, 32, 8, 7, 24, 22, 40, 6, 10, 12, 18], [null, null, null, null, null, null, null, null, null, Q3]);
+  // 5. Conferência de fidelidade
+  const wc = wb.addWorksheet('Conferência');
+  const cur = computeCurrent(); const bad = cur.lines.filter(l => l.nfStatus === 'ATIVA' && (l.after < -1e-6));
+  title(wc, 'Conferência do estoque contra as NFs', [['Linhas de NF ativas', lines.length], ['Linhas com saldo negativo', bad.length], ['Movimentos sem NF ativa', cur.orphans.length], ['Resultado', bad.length || cur.orphans.length ? 'VERIFICAR' : 'OK: nenhuma NF com retirada maior que o recebido']]);
+  await saveWb(wb, 'Relatorio_lotes_e_saldos_' + todayISO() + '.xlsx');
+};
+
+/* ---------------- PENDÊNCIAS ---------------- */
+function pendingData(res) {
+  const pr = prep(); const cur = computeCurrent();
+  const semPar = new Map();
+  cur.lines.filter(l => l.nfStatus === 'ATIVA' && !l.inBase).forEach(l => { if (!semPar.has(l.code)) semPar.set(l.code, { code: l.code, desc: l.desc, unit: l.unit, nfs: new Set(), qty: 0, saldo: 0 }); const x = semPar.get(l.code); x.nfs.add(l.nf); x.qty += l.qty; x.saldo += Math.max(0, l.after); });
+  const nfCodes = new Set(cur.lines.filter(l => l.nfStatus === 'ATIVA').map(l => l.code));
+  const semNf = [...pr.baseCodes].filter(c => !nfCodes.has(c)).sort();
+  const units = [...pr.baseCodes].map(c => pr.unitInfo(c)).filter(u => u.status === 'DIVERGENTE' || u.status === 'MISTA');
+  const neg = cur.lines.filter(l => l.after < -1e-6);
+  const have = new Set(allNfs().map(n => n.nf)); const aw = DATA.pendingNF.filter(p => !have.has(p.nf));
+  return { semPar: [...semPar.values()], semNf, units, neg, aw, pkgSpools: res.spools.filter(s => s.status !== 'OK'), pkgCodes: res.codes.filter(c => c.status !== 'OK') };
+}
+function renderPendCount(res) { const p = pendingData(res); const n = p.units.length + p.neg.length + p.pkgSpools.length + p.pkgCodes.length; $('pendCnt').textContent = n || ''; $('pendCnt').style.display = n ? '' : 'none'; }
+function renderPend(res) {
+  const p = pendingData(res); const pr = prep();
+  const card = (t, sub, body) => `<div class="card"><h2>${t}</h2><p class="sub">${sub}</p>${body}</div>`;
+  let h = '';
+  h += card('Pacote em preparação', 'Spools e códigos que impedem a baixa do pacote atual.', (p.pkgSpools.length || p.pkgCodes.length) ? `<div class="tbl" style="max-height:300px"><table><thead><tr><th>Spool / código</th><th>Problema</th><th>Detalhe</th></tr></thead><tbody>${p.pkgSpools.map(s => `<tr><td class="code">${esc(s.spool)}</td><td>${chip(s.status)}</td><td class="small">${s.prev ? 'lançado no pacote ' + esc(s.prev) : s.status === 'NÃO ENCONTRADO' ? 'tag não existe na base de spools (confira a digitação ou atualize a base)' : 'aparece mais de uma vez; só a primeira conta'}</td></tr>`).join('')}${p.pkgCodes.map(c => `<tr><td class="code">${esc(c.code)}</td><td>${chip(c.status)}</td><td class="small">${c.status === 'UNIDADE DIVERGENTE' ? `base ${esc(c.unitBase)} × NF ${esc(c.unitNF)}: informe o fator em Configurações` : `falta ${q(c.shortage)} ${esc(c.unitNF || c.unitBase)} · spools: ${esc(c.spools.slice(0, 4).join(', '))}${c.spools.length > 4 ? '…' : ''}`}</td></tr>`).join('')}</tbody></table></div>` : '<div class="muted small">Nada pendente no pacote atual.</div>');
+  h += card('Unidades divergentes', 'Códigos da base de spools cuja unidade difere da NF e ainda não têm fator de conversão. Não debitam até serem resolvidos.', p.units.length ? `<div class="tbl"><table><thead><tr><th>Código</th><th>Un base</th><th>Un NF</th><th>Status</th></tr></thead><tbody>${p.units.map(u => `<tr><td class="code">${esc(u.code)}</td><td>${esc(u.baseUnit)}</td><td>${esc(u.nfUnit)}</td><td>${chip(u.status)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="muted small">Nenhuma divergência de unidade.</div>');
+  const orph = computeCurrent().orphans;
+  if (orph.length) h += card('Movimentos sem NF ativa', 'Baixas que apontam para NF inexistente ou fora do saldo. Reative a NF ou exclua o lote.', `<div class="tbl"><table><tbody>${orph.map(m => `<tr><td>${esc(m.pkg)}</td><td>${esc(m.nf)}</td><td>${m.item}</td><td class="code">${esc(m.code)}</td><td class="n">${q(m.qty)}</td></tr>`).join('')}</tbody></table></div>`);
+  if (p.neg.length) h += card('Saldo negativo', 'Não deveria acontecer: indica baixa maior que o recebido. Verifique o histórico.', `<div class="tbl"><table><tbody>${p.neg.map(l => `<tr><td>${esc(l.nf)}</td><td>${l.item}</td><td class="code">${esc(l.code)}</td><td class="n">${q(l.after)}</td></tr>`).join('')}</tbody></table></div>`);
+  h += card('NFs de correção aguardando', 'Citadas na planilha de controle e ainda não cadastradas. Podem trazer o material que hoje falta.', p.aw.length ? p.aw.map(a => `<div class="flex" style="padding:4px 0"><b>NF ${esc(a.nf)}</b>${chip('AGUARDANDO')}</div>`).join('') : '<div class="muted small">Nenhuma.</div>');
+  h += card(`Códigos de NF sem par na base de spools (${p.semPar.length})`, 'Itens de NF ativa cujo código (já sem o prefixo) não existe no Spool Materials. Em geral são suportes, tintas, consumíveis e chapas: não saem por spool. Se algum deveria casar, confira o prefixo em Configurações.', `<div class="tbl" style="max-height:380px"><table><thead><tr><th>Código</th><th>Descrição</th><th>Un</th><th>NFs</th><th class="n">Recebido</th><th class="n">Saldo</th></tr></thead><tbody>${p.semPar.sort((a, b) => a.code.localeCompare(b.code)).map(x => `<tr><td class="code">${esc(x.code)}</td><td>${esc(x.desc)}</td><td>${esc(x.unit)}</td><td class="small">${esc([...x.nfs].join(', '))}</td><td class="n">${q(x.qty)}</td><td class="n">${q(x.saldo)}</td></tr>`).join('')}</tbody></table></div>`);
+  h += card(`Códigos da base de spools sem nenhuma NF (${p.semNf.length})`, 'Material previsto nos spools que ainda não chegou em nenhuma NF ativa. Spools que usam esses códigos ficam bloqueados.', `<details><summary>Ver lista</summary><div class="small mono" style="margin-top:8px;columns:3 220px">${p.semNf.map(c => esc(c) + '<br>').join('')}</div></details>`);
+  $('pendOut').innerHTML = h;
+}
+
+/* ---------------- CONFIG ---------------- */
+$('btnPrefixes').onclick = () => { state.config.prefixes = $('cfgPrefixes').value.split(',').map(s => s.trim()).filter(Boolean); save(); render(); toast('Prefixos salvos.'); };
+$('btnAlias').onclick = () => { const a = $('aliasFrom').value.trim().toUpperCase(), b = $('aliasTo').value.trim().toUpperCase(); if (!a || !b) return; state.config.aliases[a] = b; $('aliasFrom').value = $('aliasTo').value = ''; save(); render(); };
+$('aliasRows').onclick = e => { const b = e.target.closest('[data-alrm]'); if (!b) return; delete state.config.aliases[b.dataset.alrm]; save(); render(); };
+$('unitSearch').oninput = () => renderConfig(); $('unitAll').onchange = () => renderConfig();
+$('unitRows').onchange = e => {
+  const f = e.target.closest('[data-fac]'), u = e.target.closest('[data-ub]');
+  if (f) { const v = parseNum(f.value); if (v > 0) state.config.factors[f.dataset.fac] = v; else delete state.config.factors[f.dataset.fac]; }
+  if (u) { const v = u.value.trim().toUpperCase(); const def = BASE_UNITS[u.dataset.ub] || Engine.inferUnit(u.dataset.ub); if (!v || v === def) delete state.config.unitOverrides[u.dataset.ub]; else state.config.unitOverrides[u.dataset.ub] = v; }
+  save(); render();
+};
+function renderConfig() {
+  if (document.activeElement !== $('cfgPrefixes')) $('cfgPrefixes').value = state.config.prefixes.join(', ');
+  $('aliasRows').innerHTML = Object.entries(state.config.aliases).map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td><button class="x" data-alrm="${esc(a)}">×</button></td></tr>`).join('');
+  const pr = prep(); const s = $('unitSearch').value.trim().toUpperCase(); const all = $('unitAll').checked;
+  const wt = new Map(); spoolRows().forEach(r => { const c = String(r[1]).toUpperCase(); if (r[3] > 0 && r[4] > 0) { const x = wt.get(c) || [0, 0]; x[0] += r[4]; x[1] += r[3]; wt.set(c, x); } });
+  const rows = [...pr.baseCodes].sort().map(c => pr.unitInfo(c)).filter(u => (all || (u.status !== 'OK' && u.status !== 'SEM NF') || state.config.factors[u.code] || state.config.unitOverrides[u.code]) && (!s || u.code.includes(s)));
+  $('unitRows').innerHTML = rows.length ? rows.map(u => { const w = wt.get(u.code); return `<tr><td class="code">${esc(u.code)}</td><td class="small">${esc(pr.codeDesc.get(u.code) || '')}</td><td><input data-ub="${esc(u.code)}" value="${esc(u.baseUnit)}" style="width:60px;padding:3px 6px"></td><td>${esc(u.nfUnit)}</td><td class="n small">${w ? q(w[0] / w[1]) : ''}</td><td><input data-fac="${esc(u.code)}" value="${state.config.factors[u.code] ? q(state.config.factors[u.code]) : ''}" placeholder="—" style="width:80px;padding:3px 6px"></td><td>${chip(u.status)}</td></tr>`; }).join('') : `<tr><td colspan="7"><div class="empty">${all ? 'Nenhum código.' : 'Nenhuma divergência de unidade. Marque "mostrar todos" para ver os ' + pr.baseCodes.size + ' códigos.'}</div></td></tr>`;
+  const sb = state.spoolBase; const rowsB = spoolRows();
+  $('baseSpoolInfo').innerHTML = `${esc(sb ? sb.file + ' (importada em ' + new Date(sb.importedAt).toLocaleString('pt-BR') + ')' : DATA.spoolBaseFile + ' (original)')}<br>${rowsB.length} linhas · ${new Set(rowsB.map(r => r[0])).size} spools · ${pr.baseCodes.size} códigos`;
+  $('btnBaseRestore').style.display = sb ? '' : 'none';
+}
+$('spoolBaseFile').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const E = await loadExcel(); const wb = new E.Workbook(); await wb.xlsx.load(await f.arrayBuffer());
+    const ws = wb.worksheets[0]; const val = c => { const v = c && c.value; if (v == null) return ''; if (typeof v === 'object') return v.result ?? v.text ?? (v.richText ? v.richText.map(t => t.text).join('') : ''); return v; };
+    let hr = 0, col = {};
+    for (let r = 1; r <= Math.min(40, ws.rowCount) && !hr; r++) { const row = ws.getRow(r); const m = {}; row.eachCell((c, i) => { m[String(val(c)).replace(/\s+/g, ' ').trim().toLowerCase()] = i; }); if (m['spool'] && m['material code'] && m['quantity']) { hr = r; col = m; } }
+    if (!hr) throw new Error('Cabeçalho com Spool / Material Code / Quantity não encontrado.');
+    const rows = [];
+    for (let r = hr + 1; r <= ws.rowCount; r++) { const row = ws.getRow(r); const sp = String(val(row.getCell(col['spool']))).trim(); if (!sp) continue; rows.push([sp, String(val(row.getCell(col['material code']))).trim(), String(val(row.getCell(col['description'] || 0)) || '').replace(/\s+/g, ' ').trim(), +val(row.getCell(col['quantity'])) || 0, +val(row.getCell(col['weight'] || 0)) || 0, String(val(row.getCell(col['module'] || 0)) || ''), String(val(row.getCell(col['revision'] || 0)) || '')]); }
+    const oldSp = new Set(spoolRows().map(r => r[0])), newSp = new Set(rows.map(r => r[0])); const oldC = prep().baseCodes; const newC = new Set(rows.map(r => r[1].toUpperCase()));
+    const added = [...newSp].filter(s => !oldSp.has(s)).length, removed = [...oldSp].filter(s => !newSp.has(s)).length, nc = [...newC].filter(c => !oldC.has(c));
+    modal('Atualizar base de spools', `<p>${esc(f.name)}: <b>${rows.length}</b> linhas, <b>${newSp.size}</b> spools, <b>${newC.size}</b> códigos.</p><ul><li>${added} spool(s) novo(s), ${removed} removido(s)</li><li>${nc.length} código(s) novo(s)${nc.length ? ': ' + esc(nc.slice(0, 12).join(', ')) + (nc.length > 12 ? '…' : '') : ''}</li></ul><p class="small muted">A unidade dos códigos novos é deduzida (tubo = M, demais = PC). Confira em Unidades por código.</p><div class="flex"><span class="sp"></span><button class="btn pri" id="bGo">Usar esta base</button></div>`);
+    $('bGo').onclick = () => { state.spoolBase = { file: f.name, importedAt: new Date().toISOString(), rows }; save(); closeModal(); render(); toast('Base de spools atualizada.'); };
+  } catch (err) { toast('Não foi possível ler a planilha: ' + err.message, true); }
+};
+$('btnBaseRestore').onclick = () => { if (confirm('Voltar para a base de spools original?')) { state.spoolBase = null; save(); render(); } };
+function backup() { download('backup_devolucao_spools_' + todayISO() + '.json', JSON.stringify({ ...state, exportedAt: new Date().toISOString() }, null, 1), 'application/json'); state.lastBackup = new Date().toISOString(); save(); }
+$('btnBackup').onclick = backup; $('btnBackup2').onclick = backup;
+$('restoreFile').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; try { const s = JSON.parse(await f.text()); if (s.version !== 2 || !Array.isArray(s.movements)) throw new Error('arquivo não é um backup deste sistema'); if (!confirm(`Restaurar backup de ${s.exportedAt ? new Date(s.exportedAt).toLocaleString('pt-BR') : '?'} com ${s.packages.length} pacote(s)? Os dados atuais serão substituídos.`)) return; state = s; state.config = { ...freshState().config, ...state.config }; prepCache = null; save(); render(); toast('Backup restaurado.'); } catch (err) { toast('Backup inválido: ' + err.message, true); } };
+$('btnReset').onclick = () => { if (prompt(remote ? 'Isso apaga histórico, NFs importadas e configurações de TODOS os usuários (o GitHub guarda as versões anteriores no histórico de commits). Digite APAGAR para confirmar.' : 'Isso apaga histórico, NFs importadas e configurações deste navegador. Digite APAGAR para confirmar.') === 'APAGAR') { state = freshState(); prepCache = null; save('Dados apagados (Apagar tudo)'); render(); } };
+
+/* ---------------- GitHub ---------------- */
+function renderGh() {
+  const c = Sync.cfg;
+  $('ghInfo').innerHTML = remote
+    ? `Conectado a <b>${esc(c.owner + '/' + c.repo)}</b> como <b>${esc(c.login)}</b>. Cada baixa, estorno, NF ou configuração vira um commit no repositório (com o seu usuário), e o site confere a versão mais nova a cada minuto e antes de confirmar uma baixa.`
+    : 'Este navegador está usando dados locais (dados.js + armazenamento do navegador). Conecte ao repositório privado para compartilhar o histórico com a equipe.';
+  $('btnGhConnect').hidden = !!remote; $('btnGhRefresh').hidden = !remote; $('btnGhDisconnect').hidden = !remote;
+  $('backupInfo').textContent = remote ? 'Os dados ficam no GitHub (com histórico de versões). O backup .json continua disponível como cópia extra.' : 'Os dados ficam salvos neste navegador. Faça backup depois de cada baixa e guarde o arquivo na pasta do sistema.';
+}
+$('btnGhConnect').onclick = () => Sync.connectScreen();
+$('btnGhRefresh').onclick = async () => { if (await Sync.refresh(true)) { render(); toast('Dados conferidos com o GitHub.'); } };
+$('btnGhDisconnect').onclick = () => { if (confirm('Desconectar este navegador do GitHub? O token é apagado deste navegador; os dados continuam no repositório.')) Sync.disconnect(); };
+$('saveState').onclick = e => { if (e.target.closest('#ghRetry')) Sync.retry(); };
+if (remote) Sync.attach({
+  get: () => state,
+  apply: shared => { const d = state.draft; applyShared(shared); state.draft = d; normalizeState(); prepCache = null; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} render(); },
+  alert: (t, html) => modal(t, html + '<div class="flex" style="margin-top:12px"><span class="sp"></span><button class="btn pri" onclick="document.getElementById(\'mClose\').click()">Entendi</button></div>'),
+  canApply: () => !$('modal').classList.contains('on'),
+  status: renderSaveState
+});
+
+/* ---------------- Excel ---------------- */
+function loadScript(srcs) { return new Promise((res, rej) => { const tryI = i => { if (i >= srcs.length) return rej(new Error('biblioteca não carregou (sem internet?)')); const s = document.createElement('script'); s.src = srcs[i]; s.onload = res; s.onerror = () => { s.remove(); tryI(i + 1); }; document.head.appendChild(s); }; tryI(0); }); }
+async function loadExcel() { if (!window.ExcelJS) await loadScript(['lib/exceljs.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js']); return window.ExcelJS; }
+async function loadPdfJs() { if (window.pdfjsLib) return; await loadScript(['lib/pdf.worker.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js']); await loadScript(['lib/pdf.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js']); }
+function download(name, content, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(content instanceof Blob ? content : new Blob([content], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1500); }
+function copyText(t) { if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).catch(() => fallbackCopy(t)); else fallbackCopy(t); }
+function fallbackCopy(t) { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+async function saveWb(wb, name) { const buf = await wb.xlsx.writeBuffer(); download(name, new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); }
+const FILL = c => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: c } });
+function addTable(ws, r0, headers, rows, widths, fmt) {
+  const h = ws.getRow(r0); headers.forEach((t, i) => { const c = h.getCell(i + 1); c.value = t; c.font = { bold: true, color: { argb: 'FFFFFFFF' }, name: 'Arial', size: 10 }; c.fill = FILL('FF1F3B57'); c.alignment = { vertical: 'middle', wrapText: true }; });
+  h.height = 28;
+  rows.forEach((r, j) => { const row = ws.getRow(r0 + 1 + j); r.forEach((v, i) => { const c = row.getCell(i + 1); c.value = v; c.font = { name: 'Arial', size: 10 }; if (typeof v === 'number' && fmt && fmt[i]) c.numFmt = fmt[i]; }); });
+  if (widths) widths.forEach((w, i) => { const col = ws.getColumn(i + 1); if (!col.width || col.width < w) col.width = w; });
+  return r0 + rows.length + 1;
+}
+function paint(ws, r0, n, ncol, fn) { for (let j = 0; j < n; j++) { const row = ws.getRow(r0 + 1 + j); const st = fn(j); if (st) for (let i = 1; i <= ncol; i++) { row.getCell(i).fill = FILL(st.fill); if (st.bold) row.getCell(i).font = { name: 'Arial', size: 10, bold: true }; } } }
+function title(ws, t, lines) { ws.getCell('A1').value = t; ws.getCell('A1').font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FF1F3B57' } }; lines.forEach((l, i) => { ws.getCell('A' + (2 + i)).value = l[0]; ws.getCell('A' + (2 + i)).font = { name: 'Arial', size: 10, color: { argb: 'FF5A6B7B' } }; ws.getCell('C' + (2 + i)).value = l[1]; ws.getCell('C' + (2 + i)).font = { name: 'Arial', size: 10, bold: true }; }); return 2 + lines.length + 1; }
+function section(ws, r, t) { const c = ws.getCell('A' + r); c.value = t; c.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF1F3B57' } }; return r + 1; }
+const Q3 = '#,##0.###', M2 = '#,##0.00';
+function reportFromResult(res, status) {
+  return { id: res.pkgId || 'SEM-ID', date: state.draft.date, status, nfInvolved: res.nfInvolved, allocations: res.allocations, codes: res.codes, details: res.details, saldoLines: res.lines, nfSummary: res.nfSummary, saldoLabel: 'Posição após este pacote', blockers: res.blockers, spools: res.spools, shortSpools: res.shortSpools, removed: state.draft.removed || [] };
+}
+function reportFromPackage(p) {
+  const v = lotView(p);
+  const lineMap = new Map(v.lines.map(l => [l.lineId, l]));
+  const details = state.movements.filter(m => m.pkg === p.id).map(m => ({ spool: m.spool, code: m.code, desc: m.desc, unit: m.unit, qty: m.qty, nf: m.nf, item: m.item, codeNF: m.codeNF, date: (lineMap.get(m.lineId) || {}).date }));
+  const status = p.status + (p.status === 'ESTORNADO' ? ' (' + (p.reverseObs || '') + ')' : '') + ' · lançado em ' + new Date(p.createdAt).toLocaleString('pt-BR');
+  if (!v.step) { const cur = computeCurrent(); return { id: p.id, date: p.date, status, nfInvolved: p.snapshot.nfInvolved, allocations: p.snapshot.allocations, codes: p.snapshot.codes, details, saldoLines: cur.lines, nfSummary: cur.nfSummary, saldoLabel: 'Lote estornado: posição ATUAL das NFs', blockers: [], spools: p.spools.map(s => ({ spool: s, status: 'OK' })), removed: p.removedForAudit || [] }; }
+  return { id: p.id, date: p.date, status, nfInvolved: v.nfSummary.filter(n => n.withdrawnLines > 0), allocations: v.lines.filter(l => l.withdrawn > 0), codes: p.snapshot.codes, details, saldoLines: v.lines, nfSummary: v.nfSummary, saldoLabel: 'Saldo logo após este lote (recalculado pela sequência de lançamentos)', blockers: [], spools: p.spools.map(s => ({ spool: s, status: 'OK' })), removed: p.removedForAudit || [] };
+}
+/* Aba de apoio à emissão: só os materiais devolvidos, total por código e quanto sai de cada NF (uma coluna por NF) */
+function apoioRetorno(wb, R) {
+  const al = (R.allocations || []).filter(l => l.withdrawn > 1e-6);
+  const ws = wb.addWorksheet('APOIO EMISSÃO NF RETORNO', { views: [{ state: 'frozen', xSplit: 4, ySplit: 6, showGridLines: false }] });
+  ws.getCell('A1').value = 'Apoio à emissão das notas de retorno'; ws.getCell('A1').font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FF1F3B57' } };
+  [['Pacote', R.id], ['Data do envio', dt(R.date)], ['Situação', R.status]].forEach((l, i) => { ws.getCell('A' + (2 + i)).value = l[0]; ws.getCell('A' + (2 + i)).font = { name: 'Arial', size: 10, color: { argb: 'FF5A6B7B' } }; ws.getCell('B' + (2 + i)).value = l[1]; ws.getCell('B' + (2 + i)).font = { name: 'Arial', size: 10, bold: true }; });
+  if (!al.length) { ws.getCell('A6').value = 'Nenhum material retirado neste pacote.'; return; }
+  const nfs = [...new Map(al.map(l => [l.nf, l.date])).entries()].sort((a, b) => (a[1] || '').localeCompare(b[1] || '') || +a[0] - +b[0]);
+  const byCode = new Map();
+  al.forEach(l => {
+    if (!byCode.has(l.code)) byCode.set(l.code, { code: l.code, codeNF: new Set(), desc: l.desc, unit: l.unit, total: 0, per: new Map() });
+    const c = byCode.get(l.code); c.codeNF.add(l.codeNF); c.total = Engine.r6(c.total + l.withdrawn); c.per.set(l.nf, Engine.r6((c.per.get(l.nf) || 0) + l.withdrawn));
+  });
+  const rows = [...byCode.values()].sort((a, b) => a.code.localeCompare(b.code));
+  const hdr = ['Código', 'Descrição', 'UN', 'Quantidade total retirada'].concat(nfs.map(([nf, d]) => `NF ${nf}\n${dt(d)}`));
+  const h = ws.getRow(6); hdr.forEach((t, i) => { const c = h.getCell(i + 1); c.value = t; c.font = { bold: true, color: { argb: 'FFFFFFFF' }, name: 'Arial', size: 10 }; c.fill = FILL(i < 4 ? 'FF1F3B57' : 'FF2F6E4F'); c.alignment = { vertical: 'middle', horizontal: i < 3 ? 'left' : 'center', wrapText: true }; });
+  h.height = 34;
+  const thin = { style: 'thin', color: { argb: 'FFC8D1DA' } };
+  rows.forEach((c, j) => {
+    const r = ws.getRow(7 + j);
+    const vals = [[...c.codeNF].join(' / '), c.desc, c.unit, c.total].concat(nfs.map(([nf]) => c.per.get(nf) || null));
+    vals.forEach((v, i) => { const cell = r.getCell(i + 1); cell.value = v; cell.font = { name: 'Arial', size: 10, bold: i === 3 }; cell.border = { bottom: thin }; if (i >= 3) { cell.numFmt = Q3; cell.alignment = { horizontal: 'right' }; } if (i >= 4 && v) cell.fill = FILL('FFE6F4EA'); });
+  });
+  const tr = ws.getRow(7 + rows.length);
+  tr.getCell(1).value = 'Itens (linhas) por NF'; tr.getCell(1).font = { name: 'Arial', size: 10, bold: true };
+  nfs.forEach(([nf], i) => { const c = tr.getCell(5 + i); c.value = rows.filter(x => x.per.get(nf)).length; c.font = { name: 'Arial', size: 10, bold: true }; c.alignment = { horizontal: 'right' }; c.border = { top: thin }; });
+  ws.getCell('A' + (9 + rows.length)).value = 'Código = código do produto na NF da Brasfels. Quantidades na unidade da NF. Célula em branco = nada retirado daquela NF.';
+  ws.getCell('A' + (9 + rows.length)).font = { name: 'Arial', size: 9, italic: true, color: { argb: 'FF5A6B7B' } };
+  [24, 46, 6, 14].concat(nfs.map(() => 12)).forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+  ws.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+}
+async function exportReport(R) {
+  let E; try { E = await loadExcel(); } catch (err) { return exportCsvFallback(R, err); }
+  const wb = new E.Workbook(); wb.creator = 'Sistema de Devolução de Spools';
+  const nfSit = new Map((R.nfSummary || []).map(n => [n.nf, n.situation]));
+  const audit = () => {
+    const bad = (R.codes || []).filter(c => c.status && c.status !== 'OK');
+    if (bad.length) {
+      const wf = wb.addWorksheet('Faltas por código');
+      title(wf, 'Material sem saldo nas NFs: auditar', [['Pacote', R.id], ['Situação', R.status]]);
+      addTable(wf, 5, ['Código', 'Descrição', 'Situação', 'Un', 'Necessário', 'Saldo nas NFs', 'Falta', 'Spools que usam', 'Diagnóstico'], bad.map(c => [c.code, c.desc, c.status, c.status === 'UNIDADE DIVERGENTE' ? c.unitBase : (c.unitNF || c.unitBase), c.status === 'UNIDADE DIVERGENTE' ? c.demandBase : c.demandNF, c.available, c.shortage, (c.spools || []).length, diag(c)]), [22, 44, 18, 6, 11, 11, 10, 10, 70], [null, null, null, null, Q3, Q3, Q3]);
+    }
+    const ss = R.shortSpools || [];
+    if (ss.length) {
+      const wsp = wb.addWorksheet('Faltas por spool');
+      title(wsp, 'Spools × material sem saldo', [['Pacote', R.id], ['Leitura', 'Sem saldo > 0 = spool sem cobertura neste pacote. Linhas com 0 usam o mesmo código mas foram atendidas.']]);
+      const rows = ss.slice().sort((a, b) => (b.missing > 0) - (a.missing > 0) || a.spool.localeCompare(b.spool) || a.code.localeCompare(b.code));
+      addTable(wsp, 5, ['Spool', 'Código', 'Descrição', 'Un', 'Necessário', 'Atendido', 'Sem saldo', 'Situação do código'], rows.map(x => [x.spool, x.code, x.desc, x.unit, x.need, x.covered, x.missing, x.status]), [32, 22, 44, 6, 11, 10, 10, 18], [null, null, null, null, Q3, Q3, Q3]);
+      paint(wsp, 5, rows.length, 8, j => rows[j].missing > 1e-6 ? { fill: 'FFF8C9C9' } : null);
+      wsp.views = [{ state: 'frozen', ySplit: 5 }];
+    }
+    const rm = R.removed || [];
+    if (rm.length) {
+      const wr = wb.addWorksheet('Retirados p auditoria');
+      title(wr, 'Spools retirados do pacote para auditoria', [['Pacote', R.id]]);
+      addTable(wr, 4, ['Spool', 'Código', 'Descrição', 'Un', 'Necessário', 'Sem saldo', 'Situação', 'Retirado em'], rm.flatMap(x => x.items.map(i => [x.spool, i.code, i.desc, i.unit, i.need, i.missing, i.status, new Date(x.at).toLocaleString('pt-BR')])), [32, 22, 44, 6, 11, 10, 18, 18], [null, null, null, null, Q3, Q3]);
+    }
+  };
+  if (R.onlyAudit) { audit(); if (!wb.worksheets.length) return toast('Nenhuma falta para exportar.'); await saveWb(wb, 'Auditoria_faltas_' + String(R.id).replace(/[^\w-]+/g, '_') + '.xlsx'); return; }
+  if (!R.onlySaldo) apoioRetorno(wb, R);
+  if (!R.onlySaldo) {
+    const ws = wb.addWorksheet('Resumo do pacote', { views: [{ showGridLines: false }] });
+    let r = title(ws, 'Resumo do pacote · apoio para as notas de retorno', [['Pacote', R.id], ['Data do envio', dt(R.date)], ['Situação', R.status], ['Gerado em', new Date().toLocaleString('pt-BR')]]);
+    if (R.blockers && R.blockers.length) { r = section(ws, r, 'Avisos (pacote não pode ser lançado)'); R.blockers.forEach(b => { ws.getCell('A' + r).value = '• ' + b; ws.getCell('A' + r).font = { name: 'Arial', size: 10, color: { argb: 'FFA1261D' } }; r++; }); r++; }
+    r = section(ws, r, '1. NFs de retorno a emitir');
+    const nfs = R.nfInvolved;
+    let r1 = addTable(ws, r, ['NF', 'Emissão', 'Chave de acesso', 'Itens retirados', 'Itens que zeram', 'Valor retirado (R$)', 'Situação da NF após o pacote'], nfs.map(n => [+n.nf, dt(n.date), n.key || '', n.withdrawnLines, n.zeroingNow, n.valueWithdrawn, n.situation]), [9, 11, 46, 10, 10, 14, 36], [null, null, null, null, null, M2]);
+    paint(ws, r, nfs.length, 7, j => /DEVOLUÇÃO TOTAL/.test(nfs[j].situation) ? { fill: 'FFC9EFC4', bold: true } : null);
+    r = section(ws, r1 + 1, '2. Itens retirados por NF');
+    const al = R.allocations;
+    r1 = addTable(ws, r, ['NF', 'Emissão', 'Item NF', 'Código na NF', 'Código', 'Descrição', 'Un', 'Saldo antes', 'Retirado', 'Saldo restante', 'Valor unit. (R$)', 'Valor retirado (R$)', 'Sinalização do item', 'Situação da NF'],
+      al.map(l => [+l.nf, dt(l.date), l.item, l.codeNF, l.code, l.desc, l.unit, l.before, l.withdrawn, l.after, l.vu, Math.round(l.withdrawn * l.vu * 100) / 100, l.itemStatus === 'ZERA NESTE PACOTE' ? 'ITEM ZERADO NESTA DEVOLUÇÃO' : '', (nfs.find(n => n.nf === l.nf) || {}).situation || '']),
+      [9, 11, 7, 24, 22, 44, 6, 11, 10, 12, 12, 14, 26, 32], [null, null, null, null, null, null, null, Q3, Q3, Q3, '#,##0.0000', M2]);
+    paint(ws, r, al.length, 14, j => al[j].itemStatus === 'ZERA NESTE PACOTE' ? { fill: 'FFFFF0C2' } : null);
+    if (R.codes && R.codes.length) {
+      r = section(ws, r1 + 1, '3. Total por código de material');
+      addTable(ws, r, ['Código', 'Descrição', 'Un NF', 'Demanda', 'Retirado', 'Falta', 'Saldo restante (todas NFs)', 'Status', 'NFs'], R.codes.map(c => [c.code, c.desc, c.unitNF || c.unitBase, c.demandNF, c.allocated, c.shortage, c.after, c.status, (c.nfs || []).join(', ')]), null, [null, null, null, Q3, Q3, Q3, Q3]);
+      paint(ws, r, R.codes.length, 9, j => R.codes[j].status !== 'OK' ? { fill: 'FFF8C9C9' } : null);
+    }
+    ws.views = [{ showGridLines: false }];
+    const wd = wb.addWorksheet('Detalhe por spool');
+    title(wd, 'Detalhe por spool', [['Pacote', R.id], ['Situação', R.status]]);
+    const d = R.details;
+    addTable(wd, 5, ['Spool', 'Código', 'Descrição', 'Un', 'Qtd', 'NF de origem', 'Item NF', 'Código na NF', 'Emissão NF'], d.map(x => [x.spool, x.code, x.desc, x.unit, x.qty, x.missing ? 'SEM SALDO' : +x.nf, x.item, x.codeNF || '', dt(x.date)]), [32, 22, 46, 6, 10, 12, 8, 24, 11], [null, null, null, null, Q3]);
+    paint(wd, 5, d.length, 9, j => d[j].missing ? { fill: 'FFF8C9C9' } : null);
+    wd.views = [{ state: 'frozen', ySplit: 5 }];
+  }
+  if (!R.onlySaldo) audit();
+  const wsS = wb.addWorksheet('Saldo das NFs');
+  title(wsS, 'Saldo das NFs', [['Referência', R.saldoLabel]]);
+  const sl = R.saldoLines.filter(l => l.nfStatus === 'ATIVA');
+  addTable(wsS, 4, ['NF', 'Emissão', 'Item', 'Código na NF', 'Código', 'Descrição', 'Un', 'Recebido', 'Devolvido antes', 'Retirado no pacote', 'Saldo', 'Situação do item', 'Situação da NF', 'Sem par na base'],
+    sl.map(l => [+l.nf, dt(l.date), l.item, l.codeNF, l.code, l.desc, l.unit, l.qty, l.returned, l.withdrawn, l.after, l.itemStatus, nfSit.get(l.nf) || '', l.inBase ? '' : 'SIM']),
+    [9, 11, 6, 24, 22, 44, 6, 10, 11, 11, 10, 20, 32, 9], [null, null, null, null, null, null, null, Q3, Q3, Q3, Q3]);
+  paint(wsS, 4, sl.length, 14, j => /DEVOLUÇÃO TOTAL/.test(nfSit.get(sl[j].nf) || '') ? { fill: 'FFC9EFC4' } : sl[j].itemStatus === 'ZERA NESTE PACOTE' ? { fill: 'FFFFF0C2', bold: true } : sl[j].itemStatus === 'ZERADO' ? { fill: 'FFEEEEEE' } : null);
+  wsS.views = [{ state: 'frozen', ySplit: 4 }]; wsS.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4 + sl.length, column: 14 } };
+  await saveWb(wb, (R.onlySaldo ? 'Saldo_NFs_' : 'Apoio_devolucao_') + String(R.id).replace(/[^\w-]+/g, '_') + '.xlsx');
+}
+function exportCsvFallback(R, err) {
+  toast('Excel indisponível (' + err.message + '). Baixando CSV.', true);
+  const rows = [['NF', 'Emissão', 'Item', 'Código na NF', 'Código', 'Descrição', 'Un', 'Saldo antes', 'Retirado', 'Saldo restante', 'Sinalização']].concat((R.allocations || []).map(l => [l.nf, dt(l.date), l.item, l.codeNF, l.code, l.desc, l.unit, q(l.before), q(l.withdrawn), q(l.after), l.itemStatus]));
+  download('Apoio_' + R.id + '.csv', '﻿' + rows.map(r => r.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(';')).join('\r\n'), 'text/csv');
+}
+
+/* ---------------- start ---------------- */
+if (!state.draft || !Array.isArray(state.draft.spools)) state.draft = freshState().draft;
+if (!state.draft.date) state.draft.date = todayISO();
+renderGh(); renderSaveState(); render();
+if (unsyncedLocal) {
+  modal('Alterações que não chegaram ao GitHub', `<div class="banner warn"><b>Na última vez, este navegador ficou com alterações sem gravar no GitHub.</b>A tela mostra os dados do GitHub (versão oficial). Baixe a cópia local para conferir o que ficou de fora e refaça o que faltar.</div>
+    <div class="flex"><span class="sp"></span><button class="btn" onclick="document.getElementById('mClose').click()">Fechar</button><button class="btn pri" id="uDl">Baixar cópia local (.json)</button></div>`);
+  $('uDl').onclick = () => download('copia_local_nao_gravada_' + todayISO() + '.json', JSON.stringify({ ...unsyncedLocal, exportedAt: new Date().toISOString() }, null, 1), 'application/json');
+}
+window.__app = { state: () => state, computeDraft, Engine };
+}
+Sync.boot(startApp);
+
+</script>
+</body>
+</html>
