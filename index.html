@@ -331,7 +331,7 @@ const Sync = (() => {
       <details style="margin-top:10px"><summary>Como gerar o token</summary><ol class="small">
         <li>GitHub → foto → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</li>
         <li><b>Resource owner</b>: o dono do repositório de dados (a organização, se for o caso).</li>
-        <li><b>Repository access</b>: <i>Only select repositories</i> → só o repositório de dados.</li>
+        <li><b>Repository access</b>: <i>Only select repositories</i> → só o repositório de dados. <b>Não deixe em "Public repositories"</b> (o padrão): esse tipo de token não enxerga repositório privado.</li>
         <li><b>Permissions</b> → Repository permissions → <b>Contents: Read and write</b>.</li>
         <li>Gere, copie e cole aqui. Ao expirar, gere outro e conecte de novo.</li></ol></details>
       <div class="flex" style="margin-top:14px">${window.SPOOL_BASE_DATA ? '<button class="btn" id="gLocal">Usar só neste computador (sem GitHub)</button>' : ''}<span class="sp"></span><button class="btn pri" id="gGo">Conectar</button></div></div>`);
@@ -343,7 +343,9 @@ const Sync = (() => {
       try {
         const u = await api(n, '/user'); if (!u.ok) throw await httpError(u, 'Token');
         n.login = (await u.json()).login;
-        const r = await api(n, repoPath(n)); if (!r.ok) throw await httpError(r, 'Repositório ' + n.owner + '/' + n.repo);
+        const r = await api(n, repoPath(n));
+        if (r.status === 404) throw new Error(`o token é válido (usuário ${n.login}), mas não tem acesso a ${n.owner}/${n.repo}. Confira o nome do repositório. Se estiver certo, edite o token em github.com/settings/personal-access-tokens → Edit → Repository access: "Only select repositories" marcando ${n.repo} → Permissions: Contents = Read and write → Update, e clique em Conectar de novo (o token não muda).`);
+        if (!r.ok) throw await httpError(r, 'Repositório ' + n.owner + '/' + n.repo);
         const repo = await r.json();
         if (!repo.private) throw new Error(`o repositório ${n.owner}/${n.repo} é PÚBLICO. Os dados das NFs ficariam visíveis para qualquer pessoa. Torne-o privado (Settings → Danger Zone → Change visibility) e conecte de novo.`);
         cfg = n; ls.set(CFG_KEY, JSON.stringify(cfg)); busy(false); location.reload();
